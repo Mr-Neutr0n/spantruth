@@ -1,0 +1,5 @@
+title = "Control: reference instrumentation with four planted faults"
+homepage = "https://github.com/Plexito-de/wiretruth/blob/main/src/wiretruth/reference.py"
+kind = "control"
+providers = ["openai", "anthropic"]
+notes = "Must fail exactly the checks listed in expected.toml. If it does not, the suite is wrong."

@@ -1,0 +1,44 @@
+# Findings that are reported upstream, disputed, or explained. The report links each one
+# from the matching cell. `scenarios` lists scenario ids; `check` is the check id.
+#
+# status: reported | disputed | fixed-upstream
+
+[[issue]]
+subject = "openllmetry"
+scenarios = ["anthropic/stream", "anthropic/async-stream", "anthropic/stream-cache-hit", "anthropic/stream-cache-cumulative"]
+check = "output_tokens"
+status = "reported"
+url = "https://github.com/traceloop/openllmetry/pull/4377"
+note = "message_delta carries the cumulative output count, and the wrapper adds it to message_start's placeholder of 1."
+
+[[issue]]
+subject = "openllmetry"
+scenarios = ["anthropic/stream-early-exit", "anthropic/stream-early-exit-with", "anthropic/async-stream-early-exit"]
+check = "span.ended"
+status = "reported"
+url = "https://github.com/traceloop/openllmetry/issues/4536"
+note = "Fix proposed in https://github.com/traceloop/openllmetry/pull/4539."
+
+[[issue]]
+subject = "openllmetry"
+scenarios = ["openai/stream-dropped", "openai/async-stream-dropped"]
+check = "error.status"
+status = "reported"
+url = "https://github.com/traceloop/openllmetry/pull/4535"
+note = "_ensure_cleanup() sets OK and ends the span before the ERROR status is set, so ERROR is dropped."
+
+[[issue]]
+subject = "openinference"
+scenarios = ["openai/stream-early-exit", "openai/stream-early-exit-with", "openai/async-stream-early-exit"]
+check = "span.ended"
+status = "reported"
+url = "https://github.com/Arize-ai/openinference/issues/3790"
+note = "Fix proposed in https://github.com/Arize-ai/openinference/pull/3796."
+
+[[issue]]
+subject = "openinference"
+scenarios = ["anthropic/stream-early-exit", "anthropic/async-stream-early-exit"]
+check = "span.ended"
+status = "reported"
+url = "https://github.com/Arize-ai/openinference/issues/3930"
+note = ""

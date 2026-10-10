@@ -1,0 +1,24 @@
+name: Bug in wiretruth
+description: The harness itself misbehaves, for example a cell is inconclusive or a run fails.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command you ran, and its output.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: wiretruth version or commit
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Operating system and Python version
+    validations:
+      required: true

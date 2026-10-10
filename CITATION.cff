@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: If you use wiretruth or its results, cite it as below.
+title: "wiretruth: checking LLM telemetry values against the provider wire"
+type: software
+authors:
+  - family-names: Krah
+    given-names: Christopher
+    affiliation: Plexito UG (haftungsbeschränkt)
+repository-code: https://github.com/Plexito-de/wiretruth
+url: https://plexito-de.github.io/wiretruth/
+license: Apache-2.0
+version: 0.1.0
+date-released: 2026-10-10
+keywords:
+  - opentelemetry
+  - llm observability
+  - semantic conventions
+  - conformance testing

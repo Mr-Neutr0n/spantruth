@@ -1,0 +1,24 @@
+name: Add a subject, provider or scenario
+description: Propose a library, a provider API, or a failure mode to cover.
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What to add
+      options: [A subject (instrumentation library), A provider, A scenario]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Details
+      description: Name, link, and for a scenario the provider behavior it reproduces, with a link to the provider documentation.
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to open the pull request myself.

@@ -1,0 +1,8 @@
+title = "OpenLLMetry"
+homepage = "https://github.com/traceloop/openllmetry"
+providers = ["openai", "anthropic"]
+packages = [
+  "opentelemetry-instrumentation-openai==0.62.4",
+  "opentelemetry-instrumentation-anthropic==0.62.4",
+]
+track = ["opentelemetry-instrumentation-openai", "opentelemetry-instrumentation-anthropic"]

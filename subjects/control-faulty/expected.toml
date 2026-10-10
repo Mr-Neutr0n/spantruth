@@ -1,0 +1,21 @@
+# control-faulty must fail exactly these checks, with these verdicts, and pass every other.
+# Each line is one planted fault in src/wiretruth/reference.py showing up where it should.
+
+"anthropic/async-stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
+"anthropic/async-stream-early-exit" = { "span.ended" = "lost" }
+"anthropic/async-stream-error-event" = { "error.status" = "wrong", "error.type" = "missing" }
+"anthropic/cache-hit" = { "input_tokens" = "wrong" }
+"anthropic/rate-limited" = { "error.status" = "wrong", "error.type" = "missing" }
+"anthropic/stream-cache-cumulative" = { "input_tokens" = "wrong" }
+"anthropic/stream-cache-hit" = { "input_tokens" = "wrong" }
+"anthropic/stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
+"anthropic/stream-early-exit" = { "span.ended" = "lost" }
+"anthropic/stream-early-exit-with" = { "span.ended" = "lost" }
+"anthropic/stream-error-event" = { "error.status" = "wrong", "error.type" = "missing" }
+"openai/async-stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
+"openai/async-stream-early-exit" = { "span.ended" = "lost" }
+"openai/rate-limited" = { "error.status" = "wrong", "error.type" = "missing" }
+"openai/stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
+"openai/stream-early-exit" = { "span.ended" = "lost" }
+"openai/stream-early-exit-with" = { "span.ended" = "lost" }
+"openai/stream-no-usage" = { "output_tokens" = "wrong" }

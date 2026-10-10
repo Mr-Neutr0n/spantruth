@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.wiretruth/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+site/
+results/*
+!results/2026-10-10-pinned.json

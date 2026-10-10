@@ -1,0 +1,8 @@
+# Every subject environment gets these packages at these versions, so cells are comparable.
+python = "3.12"
+packages = [
+  "openai==3.28.0",
+  "anthropic==1.13.0",
+  "opentelemetry-sdk==1.45.1",
+  "opentelemetry-exporter-otlp-proto-http==1.45.1",
+]

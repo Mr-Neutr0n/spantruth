@@ -1,0 +1,30 @@
+name: Dispute a finding
+description: A cell on the report is red or yellow and you think the check is wrong.
+labels: ["dispute"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. Maintainers of the library under test are especially welcome here. We decide
+        every dispute on one question: does the cited rule say what the check claims?
+  - type: input
+    id: cell
+    attributes:
+      label: Subject and scenario
+      placeholder: openllmetry, anthropic/stream
+    validations:
+      required: true
+  - type: input
+    id: check
+    attributes:
+      label: Check
+      placeholder: output_tokens
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why the finding is wrong
+      description: Quote the spec, the provider documentation, or your library's documented behavior.
+    validations:
+      required: true
