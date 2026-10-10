@@ -13,6 +13,8 @@ sent: tokens, cache tokens, models, finish reasons, errors, and whether the span
 every finding with the rule it applies. It is rebuilt every night, at pinned versions and at the
 latest releases.
 
+[![The wiretruth report: a matrix of scenarios against libraries, each cell pass, missing, wrong or lost](docs/assets/report.png)](https://plexito-de.github.io/wiretruth/)
+
 ## Why
 
 Cost dashboards, token budgets, alerts and audits all read the numbers that instrumentation
