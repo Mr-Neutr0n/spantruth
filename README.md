@@ -106,6 +106,25 @@ library's own packages. wiretruth runs from a clone, because the subjects live n
 The run behind the table above is committed as
 [`results/2026-10-10-pinned.json`](results/2026-10-10-pinned.json).
 
+### Test a fix before it merges
+
+`--with` replaces one package of a subject with any pip requirement: a pull request's head, a
+branch, or a local checkout. The results record the commit it resolved to.
+
+```sh
+uv run wiretruth run --subject openllmetry --with \
+  "opentelemetry-instrumentation-anthropic @ git+https://github.com/traceloop/openllmetry@refs/pull/4377/head#subdirectory=packages/opentelemetry-instrumentation-anthropic"
+```
+
+### Show the result
+
+The nightly run against the latest releases publishes a [shields.io](https://shields.io/badges/endpoint-badge)
+endpoint per library, at `https://plexito-de.github.io/wiretruth/badges/<subject>.json`:
+
+```markdown
+[![wiretruth](https://img.shields.io/endpoint?url=https://plexito-de.github.io/wiretruth/badges/otel-official.json)](https://plexito-de.github.io/wiretruth/latest.html)
+```
+
 ## Coverage
 
 - **Providers:** OpenAI Chat Completions and Anthropic Messages, sync and async.

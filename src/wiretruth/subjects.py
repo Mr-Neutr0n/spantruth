@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import tomllib
 from dataclasses import dataclass, field
@@ -53,23 +54,38 @@ def all_names() -> list[str]:
     return sorted(p.parent.name for p in SUBJECTS.glob("*/subject.toml"))
 
 
-def requirements(subject: Subject, latest: bool) -> list[str]:
-    """Pinned requirements, or with the subject's own packages unpinned for `--latest`."""
+def package_name(spec: str) -> str:
+    """The normalized distribution name a requirement installs: `Foo_Bar @ git+...` is foo-bar."""
+    name = re.split(r"[\s<>=!~@\[;]", spec.strip(), maxsplit=1)[0]
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def requirements(subject: Subject, latest: bool, overrides: tuple[str, ...] = ()) -> list[str]:
+    """Pinned requirements, or with the subject's own packages unpinned for `--latest`.
+
+    An override replaces the requirement for the same package, for example with a pull
+    request's head: `pkg @ git+https://github.com/org/repo@refs/pull/1/head#subdirectory=pkg`.
+    """
     reqs = list(base()["packages"]) + list(subject.packages)
     if latest:
         reqs = [r.split("==")[0] if r.split("==")[0] in subject.track else r for r in reqs]
-    return reqs
+    by_name = {package_name(o): o for o in overrides}
+    return [by_name.get(package_name(r), r) for r in reqs]
 
 
-def environment(subject: Subject, cache: Path, latest: bool = False) -> tuple[Path, dict[str, str]]:
+def environment(
+    subject: Subject, cache: Path, latest: bool = False, overrides: tuple[str, ...] = ()
+) -> tuple[Path, dict[str, str]]:
     """Build (or reuse) the subject's virtual environment. Return its python and versions."""
-    reqs = requirements(subject, latest)
+    reqs = requirements(subject, latest, overrides)
+    overridden = reqs != requirements(subject, latest)
     python = base()["python"]
     key = hashlib.sha256(json.dumps([python, reqs, latest]).encode()).hexdigest()[:12]
     venv = cache / f"{subject.name}-{key}"
     py = venv / "bin" / "python"
     ready = venv / ".ready"
-    if not ready.exists() or latest:
+    # A git ref such as a pull request head moves, so an override is always reinstalled.
+    if not ready.exists() or latest or overridden:
         subprocess.run(
             ["uv", "venv", "--quiet", "--clear", "--python", python, str(venv)], check=True
         )
@@ -81,5 +97,11 @@ def environment(subject: Subject, cache: Path, latest: bool = False) -> tuple[Pa
     freeze = subprocess.run(
         ["uv", "pip", "freeze", "--python", str(py)], check=True, capture_output=True, text=True
     ).stdout
-    versions = dict(line.split("==", 1) for line in freeze.splitlines() if "==" in line)
+    versions = {}
+    for line in freeze.splitlines():
+        # `name==1.2.3`, or `name @ git+https://...@<sha>` for an override from a git ref.
+        sep = "==" if "==" in line else " @ " if " @ " in line else None
+        if sep:
+            name, version = line.split(sep, 1)
+            versions[name] = version
     return py, versions

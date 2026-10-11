@@ -26,6 +26,8 @@ LEGEND = {
     "inconclusive": "the harness could not run the cell; no verdict on the library",
 }
 
+NOT_GRADED = ("inconclusive", "n/a")
+
 
 def _subjects(doc: dict) -> list[str]:
     # Libraries first, controls last, each group in name order. No ranking.
@@ -57,6 +59,27 @@ def findings(doc: dict, known: list[dict[str, Any]] | None = None) -> list[dict[
     return out
 
 
+def badges(doc: dict) -> dict[str, dict[str, Any]]:
+    """A shields.io endpoint document per library: graded cells that pass, out of all graded.
+
+    A cell the harness could not run (`inconclusive`) or that does not apply (`n/a`) is not graded.
+    """
+    out = {}
+    for name in _subjects(doc):
+        subject = doc["subjects"][name]
+        if subject["kind"] == "control":
+            continue
+        graded = [c["verdict"] for c in subject["cells"].values() if c["verdict"] not in NOT_GRADED]
+        passed = graded.count("pass")
+        out[name] = {
+            "schemaVersion": 1,
+            "label": "wiretruth",
+            "message": f"{passed}/{len(graded)} pass",
+            "color": "brightgreen" if graded and passed == len(graded) else "orange",
+        }
+    return out
+
+
 def _link(issue: dict | None) -> str:
     return f"[{issue['status']}]({issue['url']})" if issue else "—"
 
@@ -69,6 +92,7 @@ def markdown(doc: dict) -> str:
     names = _subjects(doc)
     lines = [
         f"wiretruth {doc['wiretruth']}, {doc['mode']} versions, {doc['created']}",
+        *(f"with {spec}" for spec in doc.get("overrides", [])),
         "",
         "| Scenario | " + " | ".join(names) + " |",
         "| --- | " + " | ".join("---" for _ in names) + " |",

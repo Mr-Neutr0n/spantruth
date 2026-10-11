@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `wiretruth run --with SPEC` replaces one package of a subject with any pip requirement, such as
+  the head of a pull request, and records the commit it resolved to.
+- `wiretruth report --badges DIR` writes a shields.io endpoint document per library. The nightly
+  run publishes them under `badges/` on the report site.
+
 ## [0.1.0] - 2026-10-10
 
 ### Added

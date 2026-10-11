@@ -33,7 +33,7 @@ jobs:
       - name: Render
         run: |
           uv run wiretruth report site/pinned.json --html site/index.html
-          uv run wiretruth report site/latest.json --html site/latest.html
+          uv run wiretruth report site/latest.json --html site/latest.html --badges site/badges
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: site

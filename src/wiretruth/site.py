@@ -127,6 +127,7 @@ def render(doc: dict) -> str:
         f"wiretruth {escape(doc['wiretruth'])} · {escape(doc['mode'])} versions · "
         f"{escape(doc['created'])} · Python {escape(doc['python'])} · "
         f"semantic-conventions-genai <code>{escape(doc['semconv_genai'])}</code>"
+        + "".join(f" · with <code>{escape(o)}</code>" for o in doc.get("overrides", []))
     )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">

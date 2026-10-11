@@ -26,7 +26,20 @@ def _run(args: argparse.Namespace) -> int:
     ids = args.scenario or list(scenarios.SCENARIOS)
     for sid in ids:
         scenarios.get(sid)
-    doc = runner.run(names, ids, Path(args.cache), latest=args.latest, jobs=args.jobs)
+    overrides = tuple(args.overrides or ())
+    installed = {
+        subjects.package_name(r)
+        for n in names
+        for r in subjects.requirements(subjects.load(n), False)
+    }
+    for spec in overrides:
+        if subjects.package_name(spec) not in installed:
+            name = subjects.package_name(spec)
+            print(f"--with {spec}: no selected subject installs {name}", file=sys.stderr)
+            return 2
+    doc = runner.run(
+        names, ids, Path(args.cache), latest=args.latest, jobs=args.jobs, overrides=overrides
+    )
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
@@ -41,7 +54,13 @@ def _report(args: argparse.Namespace) -> int:
         Path(args.html).parent.mkdir(parents=True, exist_ok=True)
         Path(args.html).write_text(report.html(doc))
         print(f"wrote {args.html}")
-    if args.markdown or not args.html:
+    if args.badges:
+        out = Path(args.badges)
+        out.mkdir(parents=True, exist_ok=True)
+        for name, badge in report.badges(doc).items():
+            (out / f"{name}.json").write_text(json.dumps(badge) + "\n")
+        print(f"wrote badges to {out}")
+    if args.markdown or not (args.html or args.badges):
         print(report.markdown(doc))
     return 0
 
@@ -57,6 +76,13 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--subject", action="append", help="subject name, repeatable")
     run.add_argument("--scenario", action="append", help="scenario id, repeatable")
     run.add_argument("--latest", action="store_true", help="unpin the subjects' own packages")
+    run.add_argument(
+        "--with",
+        dest="overrides",
+        action="append",
+        metavar="SPEC",
+        help="replace a package with this requirement, such as a pull request git ref; repeatable",
+    )
     run.add_argument("--out", default="results/latest.json")
     run.add_argument("--cache", default=".wiretruth/venvs")
     run.add_argument("--jobs", type=int, default=4)
@@ -64,6 +90,9 @@ def main(argv: list[str] | None = None) -> int:
     rep = sub.add_parser("report", help="render a results document")
     rep.add_argument("results")
     rep.add_argument("--html", help="write a static HTML report to this path")
+    rep.add_argument(
+        "--badges", help="write a shields.io endpoint JSON per library to this directory"
+    )
     rep.add_argument("--markdown", action="store_true", help="print the Markdown matrix")
     rep.set_defaults(func=_report)
     args = parser.parse_args(argv)

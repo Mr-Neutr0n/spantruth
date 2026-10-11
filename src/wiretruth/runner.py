@@ -61,7 +61,12 @@ def _read(path: Path) -> dict | None:
 
 
 def run_subject(
-    subject: subjects.Subject, ids: list[str], mock: MockServer, cache: Path, latest: bool
+    subject: subjects.Subject,
+    ids: list[str],
+    mock: MockServer,
+    cache: Path,
+    latest: bool,
+    overrides: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     ids = [i for i in ids if scenarios.get(i).provider in subject.providers]
     out: dict[str, Any] = {
@@ -72,14 +77,15 @@ def run_subject(
         "cells": {},
     }
     try:
-        py, versions = subjects.environment(subject, cache, latest)
+        py, versions = subjects.environment(subject, cache, latest, overrides)
     except subprocess.CalledProcessError as exc:
         out["error"] = f"environment build failed: {exc}"
         return out
     out["versions"] = {
         k: v
         for k, v in versions.items()
-        if k.split("[")[0] in {r.split("==")[0] for r in subjects.requirements(subject, False)}
+        if subjects.package_name(k)
+        in {subjects.package_name(r) for r in subjects.requirements(subject, False)}
     }
     with tempfile.TemporaryDirectory() as tmp:
         base_file = Path(tmp) / "baseline.json"
@@ -159,7 +165,12 @@ def _downgrade_unsupported_streams(cells: dict[str, dict]) -> None:
 
 
 def run(
-    names: list[str], ids: list[str], cache: Path, latest: bool = False, jobs: int = 4
+    names: list[str],
+    ids: list[str],
+    cache: Path,
+    latest: bool = False,
+    jobs: int = 4,
+    overrides: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     cache.mkdir(parents=True, exist_ok=True)
     doc: dict[str, Any] = {
@@ -180,9 +191,12 @@ def run(
         },
         "subjects": {},
     }
+    if overrides:
+        doc["overrides"] = list(overrides)
     with MockServer() as mock, ThreadPoolExecutor(max_workers=jobs) as pool:
         futures = {
-            n: pool.submit(run_subject, subjects.load(n), ids, mock, cache, latest) for n in names
+            n: pool.submit(run_subject, subjects.load(n), ids, mock, cache, latest, overrides)
+            for n in names
         }
         doc["subjects"] = {n: f.result() for n, f in futures.items()}
     return doc

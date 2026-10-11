@@ -76,3 +76,19 @@ def test_html_has_no_scripts_and_no_external_assets():
     page = report.html(doc())
     assert "<script" not in page.replace("&lt;script", "")
     assert "src=" not in page
+
+
+def test_badges_count_graded_cells_and_skip_controls():
+    d = doc()
+    d["subjects"]["lib"]["cells"]["openai/basic"] = {"verdict": "pass", "checks": []}
+    d["subjects"]["lib"]["cells"]["openai/stream"] = {"verdict": "inconclusive", "checks": []}
+    badges = report.badges(d)
+    assert set(badges) == {"lib"}
+    assert badges["lib"] == {
+        "schemaVersion": 1,
+        "label": "wiretruth",
+        "message": "1/2 pass",
+        "color": "orange",
+    }
+    d["subjects"]["lib"]["cells"]["anthropic/stream"]["verdict"] = "pass"
+    assert report.badges(d)["lib"]["color"] == "brightgreen"
