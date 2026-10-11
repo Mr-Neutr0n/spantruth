@@ -148,6 +148,9 @@ API. [Help is welcome](CONTRIBUTING.md#ways-to-help).
 - [spanproof](https://github.com/4ktLuffy/spanproof), by 4ktLuffy, applies the same method to
   Sentry's SDK integrations. wiretruth takes its idea of validating every fixture with the
   provider SDK's own types from it.
+- [wrong-numbers](https://github.com/arthi-arumugam-git/wrong-numbers), by arthi-arumugam-git, is a
+  field guide to the same defect class across LLM eval, tracing and cost libraries: a number comes
+  out wrong and nothing raises.
 
 ## Contributing
 
