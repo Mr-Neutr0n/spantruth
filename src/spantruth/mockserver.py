@@ -65,15 +65,15 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         events = sc.response.events or ()
         drop = sc.response.drop_after
-        for index, event in enumerate(events):
-            if drop is not None and index == drop:
-                self.wfile.flush()
-                self.connection.shutdown(socket.SHUT_RDWR)
-                self.close_connection = True
-                return
+        for event in events[:drop]:
             chunk = _sse(event)
             self.wfile.write(f"{len(chunk):x}\r\n".encode() + chunk + b"\r\n")
             self.wfile.flush()
+        if drop is not None:
+            # A drop after the last event too: a recorded abort ends where the recording stops.
+            self.connection.shutdown(socket.SHUT_RDWR)
+            self.close_connection = True
+            return
         self.wfile.write(b"0\r\n\r\n")
         self.wfile.flush()
 

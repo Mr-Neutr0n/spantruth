@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+from . import recorded
 from . import wire_anthropic as an
 from . import wire_openai as oa
 from .model import Scenario, Truth
@@ -132,6 +133,24 @@ def _openai() -> list[Scenario]:
                 id="chatcmpl-wt-reason", prompt=1601, completion_tokens=2219, reasoning=1792, **body
             ),
         ),
+    ]
+
+
+def _recorded() -> list[Scenario]:
+    """Scenarios replayed from recorded provider streams, rather than built in code."""
+    abort = recorded.FIXTURES / "openai-responses" / "stream.missing-finish-abort.json"
+    return [
+        Scenario(
+            id="openai/responses-stream-missing-finish-abort",
+            provider="openai",
+            api="responses",
+            title="Responses API stream cut after eight recorded events",
+            catches="an aborted stream recorded as a success",
+            request_model=recorded.requested_model(abort),
+            response=recorded.load(abort),
+            stream=True,
+            tags=("recorded",),
+        )
     ]
 
 
@@ -290,7 +309,7 @@ def _with_async(scenarios: list[Scenario]) -> list[Scenario]:
 
 
 SCENARIOS: dict[str, Scenario] = {
-    s.id: s for s in _with_async(_with_block(_openai() + _anthropic()))
+    s.id: s for s in _with_async(_with_block(_openai() + _anthropic())) + _recorded()
 }
 
 
@@ -306,5 +325,8 @@ def by_key(key: str) -> Scenario:
 
 
 def truth(scenario: Scenario) -> Truth:
-    derive = oa.truth if scenario.provider == "openai" else an.truth
+    if scenario.api == "responses":
+        derive = oa.responses_truth
+    else:
+        derive = oa.truth if scenario.provider == "openai" else an.truth
     return derive(scenario.request_model, scenario.response, scenario.read_events)

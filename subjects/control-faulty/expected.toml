@@ -15,6 +15,7 @@
 "openai/async-stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
 "openai/async-stream-early-exit" = { "span.ended" = "lost" }
 "openai/rate-limited" = { "error.status" = "wrong", "error.type" = "missing" }
+"openai/responses-stream-missing-finish-abort" = { "error.status" = "wrong", "error.type" = "missing" }
 "openai/stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
 "openai/stream-early-exit" = { "span.ended" = "lost" }
 "openai/stream-early-exit-with" = { "span.ended" = "lost" }

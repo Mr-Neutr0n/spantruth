@@ -24,7 +24,11 @@ def mock():
 
 def _consume(sc, mock):
     """Run the scenario through the real SDK. Return (events or response, exception)."""
-    if sc.provider == "openai":
+    if sc.api == "responses":
+        client = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=0)
+        kw = {"model": sc.request_model, "input": "hi", "stream": sc.stream}
+        call = client.responses.create
+    elif sc.provider == "openai":
         client = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=0)
         kw = {"model": sc.request_model, "messages": [{"role": "user", "content": "hi"}]}
         if sc.stream:

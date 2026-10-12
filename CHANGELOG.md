@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A recorded response can be replayed as a scenario, from a fixture in kartsan03/wiretruth's
+  `wiretruth.fixture/v1` format. The first is `openai/responses-stream-missing-finish-abort`, the
+  first OpenAI Responses API scenario: eight recorded events, then the connection drops.
+- The reference instrumentation covers the Responses API, so both controls grade it.
+
+### Fixed
+
+- The fake provider now drops the connection when `drop_after` equals the number of events, where
+  it used to end the stream cleanly.
+
 ## [0.2.0] - 2026-10-12
 
 ### Changed

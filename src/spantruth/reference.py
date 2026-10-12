@@ -96,6 +96,22 @@ def _openai_chunk(call: _Call, c: Any) -> None:
         _openai_usage(call, c.usage)
 
 
+def _responses_event(call: _Call, e: Any) -> None:
+    if e.type in ("response.created", "response.completed"):
+        call.set("gen_ai.response.model", e.response.model)
+        call.set("gen_ai.response.id", e.response.id)
+    if e.type == "response.completed" and e.response.usage:
+        u = e.response.usage
+        call.usage(
+            u.input_tokens,
+            u.output_tokens,
+            read=u.input_tokens_details.cached_tokens or 0,
+            reasoning=u.output_tokens_details.reasoning_tokens or 0,
+        )
+    elif e.type == "response.output_text.delta":
+        call.text += e.delta
+
+
 def _anthropic_response(call: _Call, r: Any) -> None:
     call.set("gen_ai.response.model", r.model)
     call.set("gen_ai.response.id", r.id)
@@ -231,10 +247,22 @@ def instrument(tracer_provider, faults: set[str] = frozenset()) -> None:
     tracer = tracer_provider.get_tracer("spantruth.reference")
     import anthropic.resources.messages as am
     import openai.resources.chat.completions as oc
+    import openai.resources.responses as orr
 
     for cls, is_async in ((oc.Completions, False), (oc.AsyncCompletions, True)):
         cls.create = _wrap(
             tracer, "openai", set(faults), _openai_response, _openai_chunk, cls.create, is_async
+        )
+    for cls, is_async in ((orr.Responses, False), (orr.AsyncResponses, True)):
+        # Only streams are exercised so far, so a plain response is not read.
+        cls.create = _wrap(
+            tracer,
+            "openai",
+            set(faults),
+            lambda call, r: None,
+            _responses_event,
+            cls.create,
+            is_async,
         )
     for cls, is_async in ((am.Messages, False), (am.AsyncMessages, True)):
         cls.create = _wrap(

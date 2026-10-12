@@ -81,6 +81,24 @@ def _openai_chunk(c: Any, seen: Seen) -> None:
         seen.usage = c.usage.model_dump()
 
 
+def _responses_event(e: Any, seen: Seen) -> None:
+    seen.events += 1
+    if e.type == "response.created":
+        seen.response_id = e.response.id
+    elif e.type == "response.output_text.delta":
+        seen.text += e.delta
+    elif e.type == "response.completed" and e.response.usage:
+        seen.usage = e.response.usage.model_dump()
+
+
+def _openai_create(client: Any, sc: Scenario):
+    """The call for the scenario's API, and how the app reads a stream from it."""
+    if sc.api == "responses":
+        kw: dict = {"model": sc.request_model, "input": PROMPT, "stream": sc.stream}
+        return client.responses.create(**kw), None, _responses_event
+    return client.chat.completions.create(**_openai_kwargs(sc)), _openai_result, _openai_chunk
+
+
 def _anthropic_result(r: Any, seen: Seen) -> None:
     seen.text = "".join(b.text if b.type == "text" else b.name for b in r.content)
     seen.response_id, seen.usage = r.id, r.usage.model_dump()
@@ -103,8 +121,7 @@ def run(sc: Scenario, base_url: str, seen: Seen) -> None:
         import openai
 
         client = openai.OpenAI(base_url=base_url, api_key="wt-test", max_retries=0, timeout=10)
-        result = client.chat.completions.create(**_openai_kwargs(sc))
-        on_result, on_event = _openai_result, _openai_chunk
+        result, on_result, on_event = _openai_create(client, sc)
     else:
         import anthropic
 
@@ -136,8 +153,8 @@ async def _run_async(sc: Scenario, base_url: str, seen: Seen) -> None:
         import openai
 
         client = openai.AsyncOpenAI(base_url=base_url, api_key="wt-test", max_retries=0, timeout=10)
-        result = await client.chat.completions.create(**_openai_kwargs(sc))
-        on_result, on_event = _openai_result, _openai_chunk
+        pending, on_result, on_event = _openai_create(client, sc)
+        result = await pending
     else:
         import anthropic
 

@@ -80,6 +80,7 @@ class Scenario:
     `with_block` makes the app read the stream inside a `with` block and leave it, instead of
     calling `close()`.
     `stream_usage` False leaves out OpenAI's `include_usage`, so the stream carries no usage.
+    `api` is the OpenAI API the app calls: `chat` (Chat Completions) or `responses`.
     """
 
     id: str
@@ -93,6 +94,7 @@ class Scenario:
     tools: bool = False
     stream_usage: bool = True
     asynchronous: bool = False
+    api: str = "chat"
     catches: str = ""
     tags: tuple[str, ...] = field(default_factory=tuple)
 

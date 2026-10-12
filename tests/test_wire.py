@@ -1,7 +1,10 @@
 """Fixtures are valid wire data, and the truth derived from them is what the spec says."""
 
+import json
+
 import anthropic.types
 import openai.types.chat
+import openai.types.responses
 import pydantic
 import pytest
 
@@ -10,6 +13,7 @@ from spantruth.model import Response
 
 ALL = list(scenarios.SCENARIOS.values())
 ANTHROPIC_EVENT = pydantic.TypeAdapter(anthropic.types.RawMessageStreamEvent)
+RESPONSES_EVENT = pydantic.TypeAdapter(openai.types.responses.ResponseStreamEvent)
 
 
 @pytest.mark.parametrize("sc", ALL, ids=lambda s: s.id)
@@ -18,7 +22,10 @@ def test_fixtures_parse_with_sdk_types(sc):
     if r.status >= 400:
         assert r.body is not None and "error" in r.body
         return
-    if sc.provider == "openai":
+    if sc.api == "responses":
+        for e in r.events or ():
+            assert RESPONSES_EVENT.validate_python(json.loads(e.data)).type == e.event
+    elif sc.provider == "openai":
         if r.body is not None:
             openai.types.chat.ChatCompletion.model_validate(r.body, strict=False)
         for e in r.events or ():

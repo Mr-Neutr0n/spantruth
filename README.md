@@ -127,17 +127,20 @@ endpoint per library, at `https://plexito-de.github.io/spantruth/badges/<subject
 
 ## Coverage
 
-- **Providers:** OpenAI Chat Completions and Anthropic Messages, sync and async.
-- **Scenarios (31):** plain call, stream, stream without usage, prompt-cache hit (plain, streamed,
+- **Providers:** OpenAI Chat Completions and Anthropic Messages, sync and async. The OpenAI
+  Responses API has its first scenario, a stream replayed from a recording.
+- **Scenarios (32):** plain call, stream, stream without usage, prompt-cache hit (plain, streamed,
   and with cumulative counts in `message_delta`), parallel tool calls, reasoning tokens, HTTP 429,
   a stream the app leaves early (by `close()` and by a `with` block), a dropped connection, and
-  Anthropic's mid-stream `error` event. Streams and failures run sync and async.
+  Anthropic's mid-stream `error` event. Streams and failures run sync and async. A Responses API
+  stream cut after eight recorded events replays kartsan03/wiretruth's
+  `stream.missing-finish-abort` fixture, vendored unchanged with its provenance.
 - **Subjects:** the [OpenTelemetry GenAI instrumentation](https://github.com/open-telemetry/opentelemetry-python-genai),
   [OpenLLMetry](https://github.com/traceloop/openllmetry) and
   [OpenInference](https://github.com/Arize-ai/openinference), plus the two controls.
 
-Next: Logfire, OpenLIT, the JavaScript libraries, AWS Bedrock, Gemini and the OpenAI Responses
-API. [Help is welcome](CONTRIBUTING.md#ways-to-help).
+Next: Logfire, OpenLIT, the JavaScript libraries, AWS Bedrock, Gemini and the rest of the OpenAI
+Responses API. [Help is welcome](CONTRIBUTING.md#ways-to-help).
 
 ## Related work
 

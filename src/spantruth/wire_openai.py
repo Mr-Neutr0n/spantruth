@@ -158,6 +158,17 @@ def truth(request_model: str, response: Response, read_events: int | None = None
     )
 
 
+def responses_truth(
+    request_model: str, response: Response, read_events: int | None = None
+) -> Truth:
+    """The truth of a Responses API stream. Only the failure paths are graded so far."""
+    if response.status >= 400:
+        return Truth(request_model=request_model, error=f"HTTP {response.status}")
+    if response.reaches_drop(read_events):
+        return Truth(request_model=request_model, error="connection dropped")
+    raise NotImplementedError("a Responses stream that ends is not graded yet")
+
+
 def _tokens(usage: dict) -> dict:
     return {
         "input_tokens": usage["prompt_tokens"],
