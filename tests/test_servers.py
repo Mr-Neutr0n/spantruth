@@ -9,9 +9,9 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.trace import StatusCode
 
-from wiretruth import scenarios
-from wiretruth.mockserver import MockServer
-from wiretruth.receiver import Receiver
+from spantruth import scenarios
+from spantruth.mockserver import MockServer
+from spantruth.receiver import Receiver
 
 ALL = list(scenarios.SCENARIOS.values())
 

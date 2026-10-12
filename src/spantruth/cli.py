@@ -1,4 +1,4 @@
-"""wiretruth command line: list, run, report."""
+"""spantruth command line: list, run, report."""
 
 from __future__ import annotations
 
@@ -67,7 +67,7 @@ def _report(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="wiretruth",
+        prog="spantruth",
         description="Check what LLM instrumentation reports against what the provider sent.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
         help="replace a package with this requirement, such as a pull request git ref; repeatable",
     )
     run.add_argument("--out", default="results/latest.json")
-    run.add_argument("--cache", default=".wiretruth/venvs")
+    run.add_argument("--cache", default=".spantruth/venvs")
     run.add_argument("--jobs", type=int, default=4)
     run.set_defaults(func=_run)
     rep = sub.add_parser("report", help="render a results document")
@@ -96,6 +96,14 @@ def main(argv: list[str] | None = None) -> int:
     rep.add_argument("--markdown", action="store_true", help="print the Markdown matrix")
     rep.set_defaults(func=_report)
     args = parser.parse_args(argv)
+    if args.command in ("list", "run") and not subjects.SUBJECTS.is_dir():
+        print(
+            "spantruth runs from a clone, because the subjects live next to the source:\n"
+            "  git clone https://github.com/Plexito-de/spantruth.git && cd spantruth\n"
+            "  uv run spantruth list",
+            file=sys.stderr,
+        )
+        return 2
     return args.func(args)
 
 

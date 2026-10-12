@@ -1,6 +1,6 @@
 """The Markdown and HTML renderers, on a small hand-built results document."""
 
-from wiretruth import report
+from spantruth import report
 
 HOSTILE = "<script>alert(1)</script>"
 
@@ -17,7 +17,7 @@ def doc():
         "rule_url": "https://example.com/rule",
     }
     return {
-        "wiretruth": "0.1.0",
+        "spantruth": "0.1.0",
         "mode": "pinned",
         "created": "2026-10-10T00:00:00+00:00",
         "python": "3.12",
@@ -86,7 +86,7 @@ def test_badges_count_graded_cells_and_skip_controls():
     assert set(badges) == {"lib"}
     assert badges["lib"] == {
         "schemaVersion": 1,
-        "label": "wiretruth",
+        "label": "spantruth",
         "message": "1/2 pass",
         "color": "orange",
     }

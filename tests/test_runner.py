@@ -1,6 +1,6 @@
 """The runner's cross-cell rule, without subprocesses."""
 
-from wiretruth.runner import _downgrade_unsupported_streams
+from spantruth.runner import _downgrade_unsupported_streams
 
 
 def cell(*checks):

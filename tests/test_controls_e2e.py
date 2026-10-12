@@ -8,8 +8,8 @@ import tomllib
 
 import pytest
 
-from wiretruth import runner, scenarios
-from wiretruth.subjects import SUBJECTS
+from spantruth import runner, scenarios
+from spantruth.subjects import SUBJECTS
 
 pytestmark = [pytest.mark.slow, pytest.mark.external, pytest.mark.timeout(900)]
 

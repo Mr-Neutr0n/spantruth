@@ -6,11 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed from wiretruth to spantruth: the package, the command, the module and the repository.
+  [kartsan03/wiretruth](https://github.com/kartsan03/wiretruth) is a separate project that checks
+  what provider SDKs return to the caller. The cache directory is now `.spantruth/`.
+- Each tag now also publishes a wheel to PyPI as `spantruth`. A run still needs a clone, and
+  `spantruth list` and `spantruth run` say so when the subjects are missing.
+
 ### Added
 
-- `wiretruth run --with SPEC` replaces one package of a subject with any pip requirement, such as
+- `spantruth run --with SPEC` replaces one package of a subject with any pip requirement, such as
   the head of a pull request, and records the commit it resolved to.
-- `wiretruth report --badges DIR` writes a shields.io endpoint document per library. The nightly
+- `spantruth report --badges DIR` writes a shields.io endpoint document per library. The nightly
   run publishes them under `badges/` on the report site.
 
 ## [0.1.0] - 2026-10-10
@@ -30,5 +38,5 @@ All notable changes to this project are documented here. The format follows
 - Subjects: the OpenTelemetry GenAI instrumentation, OpenLLMetry and OpenInference.
 - A Markdown and a static HTML report.
 
-[Unreleased]: https://github.com/Plexito-de/wiretruth/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Plexito-de/wiretruth/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Plexito-de/spantruth/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Plexito-de/spantruth/releases/tag/v0.1.0

@@ -13,7 +13,7 @@ RECORDING_ERRORS = (
 
 RULES: dict[str, tuple[str, str]] = {
     "app.unchanged": (
-        "wiretruth rule: instrumentation does not change what the application receives: the same "
+        "spantruth rule: instrumentation does not change what the application receives: the same "
         "return values, the same chunks, the same exceptions, and no hang.",
         "",
     ),
@@ -23,7 +23,7 @@ RULES: dict[str, tuple[str, str]] = {
         f"{GENAI}/docs/gen-ai/gen-ai-spans.md#L29-L31",
     ),
     "span.recorded": (
-        "wiretruth rule: a call the application made produces at least one span.",
+        "spantruth rule: a call the application made produces at least one span.",
         "",
     ),
     "span.parented": (
@@ -79,7 +79,7 @@ RULES: dict[str, tuple[str, str]] = {
         f"{GENAI}/model/gen-ai/registry.yaml#L346",
     ),
     "tokens.single-report": (
-        "wiretruth rule: one call reports its token usage on one span. Usage on two spans of one "
+        "spantruth rule: one call reports its token usage on one span. Usage on two spans of one "
         "call is counted twice by any backend that sums token attributes across spans.",
         "",
     ),

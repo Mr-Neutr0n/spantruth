@@ -1,7 +1,7 @@
 name: Release
 
-# A release is a tag with notes. wiretruth runs from a clone (subjects live next to the source),
-# so no wheel is published.
+# A release is a tag with notes and a wheel on PyPI. The wheel holds the harness and the CLI. A run
+# still needs a clone, because the subjects live next to the source, and the CLI says so.
 on:
   push:
     tags: ["v*"]
@@ -17,3 +17,18 @@ jobs:
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           generate_release_notes: true
+
+  pypi:
+    runs-on: ubuntu-latest
+    # Trusted publishing: PyPI trusts this workflow and this environment, so no token is stored.
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv build
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

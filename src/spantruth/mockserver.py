@@ -53,7 +53,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("content-type", "application/json")
         self.send_header("content-length", str(len(payload)))
-        self.send_header("x-request-id", "req_wiretruth")
+        self.send_header("x-request-id", "req_spantruth")
         self.end_headers()
         self.wfile.write(payload)
 
@@ -61,7 +61,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_response(sc.response.status)
         self.send_header("content-type", "text/event-stream")
         self.send_header("transfer-encoding", "chunked")
-        self.send_header("x-request-id", "req_wiretruth")
+        self.send_header("x-request-id", "req_spantruth")
         self.end_headers()
         events = sc.response.events or ()
         drop = sc.response.drop_after

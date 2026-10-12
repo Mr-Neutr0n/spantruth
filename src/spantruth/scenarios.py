@@ -298,7 +298,7 @@ def get(scenario_id: str) -> Scenario:
     try:
         return SCENARIOS[scenario_id]
     except KeyError:
-        raise KeyError(f"unknown scenario {scenario_id!r}; run `wiretruth list`") from None
+        raise KeyError(f"unknown scenario {scenario_id!r}; run `spantruth list`") from None
 
 
 def by_key(key: str) -> Scenario:

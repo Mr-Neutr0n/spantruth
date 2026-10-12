@@ -1,7 +1,7 @@
 """The process that runs inside a subject's virtual environment.
 
-    python -m wiretruth.driver baseline --mock URL --out FILE SCENARIO...
-    python -m wiretruth.driver instrumented --mock URL --otlp URL --subject DIR --out FILE SCENARIO
+    python -m spantruth.driver baseline --mock URL --out FILE SCENARIO...
+    python -m spantruth.driver instrumented --mock URL --otlp URL --subject DIR --out FILE SCENARIO
 
 `baseline` runs scenarios with no instrumentation and records what the app saw.
 `instrumented` runs one scenario, in a fresh process, with the subject attached, inside a parent
@@ -68,7 +68,7 @@ def _watchdog(out: str, scenario_id: str) -> threading.Timer:
 
 def _load_subject(directory: str):
     path = Path(directory) / "instrument.py"
-    spec = importlib.util.spec_from_file_location("wiretruth_subject", path)
+    spec = importlib.util.spec_from_file_location("spantruth_subject", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -116,7 +116,7 @@ def instrumented(scenario_id: str, mock: str, otlp: str, subject: str, out: str)
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
     probe = _install_probe()
-    provider = TracerProvider(resource=Resource.create({"service.name": "wiretruth"}))
+    provider = TracerProvider(resource=Resource.create({"service.name": "spantruth"}))
     provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(f"{otlp}/v1/traces")))
     result: dict[str, Any] = {"scenario": scenario_id, "hang": False}
     try:
@@ -132,7 +132,7 @@ def instrumented(scenario_id: str, mock: str, otlp: str, subject: str, out: str)
         trace.set_tracer_provider(provider)
         current = provider
     timer = _watchdog(out, scenario_id)
-    with current.get_tracer("wiretruth.driver").start_as_current_span("wiretruth.scenario") as p:
+    with current.get_tracer("spantruth.driver").start_as_current_span("spantruth.scenario") as p:
         ctx = p.get_span_context()
         result |= observe(scenario_id, mock)
         result["parent"] = {
@@ -148,7 +148,7 @@ def instrumented(scenario_id: str, mock: str, otlp: str, subject: str, out: str)
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="wiretruth.driver")
+    parser = argparse.ArgumentParser(prog="spantruth.driver")
     parser.add_argument("mode", choices=["baseline", "instrumented"])
     parser.add_argument("scenarios", nargs="+")
     parser.add_argument("--mock", required=True)

@@ -36,7 +36,7 @@ def _env(subject: subjects.Subject, otlp: str) -> dict[str, str]:
         | {
             "OTEL_EXPORTER_OTLP_ENDPOINT": otlp,
             "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
-            "OTEL_SERVICE_NAME": "wiretruth",
+            "OTEL_SERVICE_NAME": "spantruth",
             "PYTHONDONTWRITEBYTECODE": "1",
         }
         | subject.env
@@ -45,7 +45,7 @@ def _env(subject: subjects.Subject, otlp: str) -> dict[str, str]:
 
 def _driver(py: Path, args: list[str], env: dict[str, str]) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [str(py), "-m", "wiretruth.driver", *args],
+        [str(py), "-m", "spantruth.driver", *args],
         env=env,
         capture_output=True,
         text=True,
@@ -174,7 +174,7 @@ def run(
 ) -> dict[str, Any]:
     cache.mkdir(parents=True, exist_ok=True)
     doc: dict[str, Any] = {
-        "wiretruth": __version__,
+        "spantruth": __version__,
         "created": datetime.now(UTC).isoformat(timespec="seconds"),
         "mode": "latest" if latest else "pinned",
         "python": subjects.base()["python"],

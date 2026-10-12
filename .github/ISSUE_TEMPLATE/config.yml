@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or idea
-    url: https://github.com/Plexito-de/wiretruth/discussions
+    url: https://github.com/Plexito-de/spantruth/discussions
     about: Ask a question or float an idea in Discussions.
   - name: Security problem
-    url: https://github.com/Plexito-de/wiretruth/security/advisories/new
+    url: https://github.com/Plexito-de/spantruth/security/advisories/new
     about: Report a vulnerability privately. Do not open a public issue.

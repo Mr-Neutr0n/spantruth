@@ -124,7 +124,7 @@ def render(doc: dict) -> str:
     legend = "".join(f"<span>{_badge(k)} {escape(v)}</span>" for k, v in LEGEND.items())
     found = "".join(_finding(f) for f in findings(doc)) or "<p>No findings.</p>"
     meta = (
-        f"wiretruth {escape(doc['wiretruth'])} · {escape(doc['mode'])} versions · "
+        f"spantruth {escape(doc['spantruth'])} · {escape(doc['mode'])} versions · "
         f"{escape(doc['created'])} · Python {escape(doc['python'])} · "
         f"semantic-conventions-genai <code>{escape(doc['semconv_genai'])}</code>"
         + "".join(f" · with <code>{escape(o)}</code>" for o in doc.get("overrides", []))
@@ -132,17 +132,17 @@ def render(doc: dict) -> str:
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>wiretruth report</title>
+<title>spantruth report</title>
 {ICON}
 <meta name="description" content="Does LLM telemetry match what the provider sent?
 Wire traffic replayed through instrumentation libraries, checked value by value.">
 <style>{CSS}</style></head>
 <body><main>
-<h1>wiretruth</h1>
+<h1>spantruth</h1>
 <p>Does the telemetry an LLM instrumentation library reports match what the provider actually
 sent? Each cell replays one provider response through one library and checks every reported value
 against the wire.</p>
-<p class="muted">{meta} · <a href="https://github.com/Plexito-de/wiretruth">source</a></p>
+<p class="muted">{meta} · <a href="https://github.com/Plexito-de/spantruth">source</a></p>
 <p>Pages: <a href="index.html">pinned versions</a> · <a href="latest.html">latest releases</a>.
 A fix that ships upstream turns its cell green on the latest-releases page first.</p>
 <div class="legend">{legend}</div>
@@ -152,7 +152,7 @@ A fix that ships upstream turns its cell green on the latest-releases page first
 exactly its planted faults. If either moves, the suite is wrong, not a library.</p>
 <h2>Findings</h2>
 <p class="muted">Every finding cites the rule it applies. To dispute one, open an issue: a disputed
-finding is marked as such in <a href="https://github.com/Plexito-de/wiretruth/blob/main/known_issues.toml">known_issues.toml</a>.</p>
+finding is marked as such in <a href="https://github.com/Plexito-de/spantruth/blob/main/known_issues.toml">known_issues.toml</a>.</p>
 {found}
 <h2>Subjects and versions</h2>
 {_versions(doc, names)}

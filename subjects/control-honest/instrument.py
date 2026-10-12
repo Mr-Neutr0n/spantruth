@@ -1,6 +1,6 @@
 """The reference instrumentation, as written."""
 
-from wiretruth import reference
+from spantruth import reference
 
 
 def instrument(tracer_provider, otlp_endpoint):

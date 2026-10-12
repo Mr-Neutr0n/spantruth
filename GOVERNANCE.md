@@ -1,6 +1,6 @@
 # Governance
 
-wiretruth is maintained by [Plexito](https://plexito.de). The people with write access are listed
+spantruth is maintained by [Plexito](https://plexito.de). The people with write access are listed
 in [MAINTAINERS.md](MAINTAINERS.md).
 
 ## Decisions

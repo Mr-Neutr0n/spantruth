@@ -1,4 +1,4 @@
-name: Bug in wiretruth
+name: Bug in spantruth
 description: The harness itself misbehaves, for example a cell is inconclusive or a run fails.
 labels: ["bug"]
 body:
@@ -13,7 +13,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: wiretruth version or commit
+      label: spantruth version or commit
     validations:
       required: true
   - type: input

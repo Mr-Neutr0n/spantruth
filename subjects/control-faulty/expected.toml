@@ -1,5 +1,5 @@
 # control-faulty must fail exactly these checks, with these verdicts, and pass every other.
-# Each line is one planted fault in src/wiretruth/reference.py showing up where it should.
+# Each line is one planted fault in src/spantruth/reference.py showing up where it should.
 
 "anthropic/async-stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
 "anthropic/async-stream-early-exit" = { "span.ended" = "lost" }

@@ -1,12 +1,12 @@
-# Contributing to wiretruth
+# Contributing to spantruth
 
-Thank you for your interest. wiretruth gets better with every library, provider and failure mode
+Thank you for your interest. spantruth gets better with every library, provider and failure mode
 that somebody adds, and with every maintainer who tells us where a check is unfair.
 
 ## Ways to help
 
 These are the contributions the project needs most. Each one has an issue with the
-[`help wanted`](https://github.com/Plexito-de/wiretruth/labels/help%20wanted) label.
+[`help wanted`](https://github.com/Plexito-de/spantruth/labels/help%20wanted) label.
 
 - **Add a subject.** Logfire, OpenLIT, MLflow, LiteLLM, and the JavaScript libraries
   (OpenLLMetry JS, OpenInference JS, the Vercel AI SDK) are not covered yet.
@@ -24,8 +24,8 @@ These are the contributions the project needs most. Each one has an issue with t
 You need [uv](https://docs.astral.sh/uv/) and Python 3.11 or later.
 
 ```sh
-git clone https://github.com/Plexito-de/wiretruth.git
-cd wiretruth
+git clone https://github.com/Plexito-de/spantruth.git
+cd spantruth
 uv sync
 uv run pytest -m "not slow"     # unit tests, about 5 seconds
 uv run pytest -m slow           # both controls end to end, about 2 minutes
@@ -48,16 +48,16 @@ uv run ruff check . && uv run ruff format --check .
 
    Use the setup that the library's own documentation shows first. Return nothing, or a list of
    extra tracer providers to flush when the library makes its own.
-3. Run it: `uv run wiretruth run --subject <name>`.
+3. Run it: `uv run spantruth run --subject <name>`.
 4. Read every red cell before you open the pull request. A red cell is a claim about somebody's
    library. Find the line of code that causes it, or tell us in the pull request that you could
    not.
 
 ## Add a scenario
 
-1. Build the response in `src/wiretruth/scenarios.py` with the builders in `wire_openai.py` or
+1. Build the response in `src/spantruth/scenarios.py` with the builders in `wire_openai.py` or
    `wire_anthropic.py`. Give every token count a value that no other count in the scenario has.
-2. If the scenario needs a new kind of call, add it to `src/wiretruth/calls.py`.
+2. If the scenario needs a new kind of call, add it to `src/spantruth/calls.py`.
 3. Run `uv run pytest`. `test_fixtures_parse_with_sdk_types` proves that the provider's SDK
    accepts your fixture.
 4. Run the controls. `control-honest` must pass the new scenario. If it does not, fix the

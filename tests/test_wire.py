@@ -5,8 +5,8 @@ import openai.types.chat
 import pydantic
 import pytest
 
-from wiretruth import scenarios
-from wiretruth.model import Response
+from spantruth import scenarios
+from spantruth.model import Response
 
 ALL = list(scenarios.SCENARIOS.values())
 ANTHROPIC_EVENT = pydantic.TypeAdapter(anthropic.types.RawMessageStreamEvent)

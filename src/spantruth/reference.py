@@ -228,7 +228,7 @@ def _finish(call: _Call, result: Any, kwargs: dict, on_result, on_event) -> Any:
 
 
 def instrument(tracer_provider, faults: set[str] = frozenset()) -> None:
-    tracer = tracer_provider.get_tracer("wiretruth.reference")
+    tracer = tracer_provider.get_tracer("spantruth.reference")
     import anthropic.resources.messages as am
     import openai.resources.chat.completions as oc
 

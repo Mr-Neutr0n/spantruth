@@ -1,8 +1,8 @@
 """Every verdict the checks can return, on hand-built records. No subprocess, no network."""
 
-from wiretruth import scenarios
-from wiretruth.checks import cell_verdict, grade
-from wiretruth.receiver import SpanRecord
+from spantruth import scenarios
+from spantruth.checks import cell_verdict, grade
+from spantruth.receiver import SpanRecord
 
 TRACE, PARENT = "a" * 32, "b" * 16
 BASE = {"exception": None, "seen": {"text": "x", "events": 0, "response_id": "r", "usage": None}}

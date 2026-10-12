@@ -73,7 +73,7 @@ def badges(doc: dict) -> dict[str, dict[str, Any]]:
         passed = graded.count("pass")
         out[name] = {
             "schemaVersion": 1,
-            "label": "wiretruth",
+            "label": "spantruth",
             "message": f"{passed}/{len(graded)} pass",
             "color": "brightgreen" if graded and passed == len(graded) else "orange",
         }
@@ -91,7 +91,7 @@ def _fmt(value: Any) -> str:
 def markdown(doc: dict) -> str:
     names = _subjects(doc)
     lines = [
-        f"wiretruth {doc['wiretruth']}, {doc['mode']} versions, {doc['created']}",
+        f"spantruth {doc['spantruth']}, {doc['mode']} versions, {doc['created']}",
         *(f"with {spec}" for spec in doc.get("overrides", [])),
         "",
         "| Scenario | " + " | ".join(names) + " |",

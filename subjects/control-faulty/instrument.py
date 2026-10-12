@@ -1,6 +1,6 @@
 """The reference instrumentation with every known fault switched on."""
 
-from wiretruth import reference
+from spantruth import reference
 
 FAULTS = {"anthropic-raw-input", "close-leaks-span", "errors-as-success", "estimate-tokens"}
 

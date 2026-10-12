@@ -1,19 +1,19 @@
-# wiretruth
+# spantruth
 
-**Does your LLM telemetry tell the truth?** wiretruth replays provider responses through LLM
+**Does your LLM telemetry tell the truth?** spantruth replays provider responses through LLM
 instrumentation libraries and checks the values they report against what the provider actually
 sent: tokens, cache tokens, models, finish reasons, errors, and whether the span ends at all.
 
-[![CI](https://github.com/Plexito-de/wiretruth/actions/workflows/ci.yml/badge.svg)](https://github.com/Plexito-de/wiretruth/actions/workflows/ci.yml)
-[![Report](https://github.com/Plexito-de/wiretruth/actions/workflows/report.yml/badge.svg)](https://plexito-de.github.io/wiretruth/)
+[![CI](https://github.com/Plexito-de/spantruth/actions/workflows/ci.yml/badge.svg)](https://github.com/Plexito-de/spantruth/actions/workflows/ci.yml)
+[![Report](https://github.com/Plexito-de/spantruth/actions/workflows/report.yml/badge.svg)](https://plexito-de.github.io/spantruth/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 
-**[Read the report](https://plexito-de.github.io/wiretruth/)**: every library, every scenario,
+**[Read the report](https://plexito-de.github.io/spantruth/)**: every library, every scenario,
 every finding with the rule it applies. It is rebuilt every night, at pinned versions and at the
 latest releases.
 
-[![The wiretruth report: a matrix of scenarios against libraries, each cell pass, missing, wrong or lost](docs/assets/report.png)](https://plexito-de.github.io/wiretruth/)
+[![The spantruth report: a matrix of scenarios against libraries, each cell pass, missing, wrong or lost](https://raw.githubusercontent.com/Plexito-de/spantruth/main/docs/assets/report.png)](https://plexito-de.github.io/spantruth/)
 
 ## Why
 
@@ -23,13 +23,13 @@ the dashboard shows a wrong number with full confidence. When a span never ends,
 missing from the trace altogether.
 
 These bugs live on the paths that normal tests skip: a stream the app leaves early, a connection
-that drops, a 429, a prompt-cache hit. wiretruth tests exactly those paths, for every library,
+that drops, a 429, a prompt-cache hit. spantruth tests exactly those paths, for every library,
 in the same way.
 
 ## What the first run shows
 
 Pinned versions, 2026-10-10. Every finding but one was already reported upstream, by the people
-credited below. wiretruth reproduces each of them on the same footing, and the nightly run against
+credited below. spantruth reproduces each of them on the same footing, and the nightly run against
 the latest releases shows when a fix lands.
 
 | Library | Finding | Upstream |
@@ -47,7 +47,7 @@ read from, and the rule it applies, with a link wherever a spec states it.
 ## How it works
 
 ```text
-wiretruth run
+spantruth run
   ├─ fake provider endpoint     serves the scenario: JSON, SSE stream, 429, dropped connection
   ├─ OTLP/HTTP receiver         collects every span the library exports
   └─ per library: own venv  →  the app calls the real OpenAI / Anthropic SDK
@@ -93,16 +93,16 @@ library.
 You need [uv](https://docs.astral.sh/uv/).
 
 ```sh
-git clone https://github.com/Plexito-de/wiretruth.git && cd wiretruth
+git clone https://github.com/Plexito-de/spantruth.git && cd spantruth
 uv sync
-uv run wiretruth list                                    # scenarios and subjects
-uv run wiretruth run --subject openllmetry               # one library, every scenario
-uv run wiretruth run                                     # everything, about 3 minutes
-uv run wiretruth report results/latest.json --html site/index.html
+uv run spantruth list                                    # scenarios and subjects
+uv run spantruth run --subject openllmetry               # one library, every scenario
+uv run spantruth run                                     # everything, about 3 minutes
+uv run spantruth report results/latest.json --html site/index.html
 ```
 
-Each subject gets its own virtual environment under `.wiretruth/venvs`. `--latest` unpins the
-library's own packages. wiretruth runs from a clone, because the subjects live next to the source.
+Each subject gets its own virtual environment under `.spantruth/venvs`. `--latest` unpins the
+library's own packages. spantruth runs from a clone, because the subjects live next to the source.
 The run behind the table above is committed as
 [`results/2026-10-10-pinned.json`](results/2026-10-10-pinned.json).
 
@@ -112,17 +112,17 @@ The run behind the table above is committed as
 branch, or a local checkout. The results record the commit it resolved to.
 
 ```sh
-uv run wiretruth run --subject openllmetry --with \
+uv run spantruth run --subject openllmetry --with \
   "opentelemetry-instrumentation-anthropic @ git+https://github.com/traceloop/openllmetry@refs/pull/4377/head#subdirectory=packages/opentelemetry-instrumentation-anthropic"
 ```
 
 ### Show the result
 
 The nightly run against the latest releases publishes a [shields.io](https://shields.io/badges/endpoint-badge)
-endpoint per library, at `https://plexito-de.github.io/wiretruth/badges/<subject>.json`:
+endpoint per library, at `https://plexito-de.github.io/spantruth/badges/<subject>.json`:
 
 ```markdown
-[![wiretruth](https://img.shields.io/endpoint?url=https://plexito-de.github.io/wiretruth/badges/otel-official.json)](https://plexito-de.github.io/wiretruth/latest.html)
+[![spantruth](https://img.shields.io/endpoint?url=https://plexito-de.github.io/spantruth/badges/otel-official.json)](https://plexito-de.github.io/spantruth/latest.html)
 ```
 
 ## Coverage
@@ -143,19 +143,23 @@ API. [Help is welcome](CONTRIBUTING.md#ways-to-help).
 
 - [open-telemetry/semantic-conventions-conformance](https://github.com/open-telemetry/semantic-conventions-conformance)
   is the official project. It checks which attributes each instrumentation emits, against the
-  semantic conventions, with Weaver. wiretruth is complementary: it checks the values, and the
+  semantic conventions, with Weaver. spantruth is complementary: it checks the values, and the
   failure paths. A finding that belongs upstream goes upstream.
 - [spanproof](https://github.com/4ktLuffy/spanproof), by 4ktLuffy, applies the same method to
-  Sentry's SDK integrations. wiretruth takes its idea of validating every fixture with the
+  Sentry's SDK integrations. spantruth takes its idea of validating every fixture with the
   provider SDK's own types from it.
 - [wrong-numbers](https://github.com/arthi-arumugam-git/wrong-numbers), by arthi-arumugam-git, is a
   field guide to the same defect class across LLM eval, tracing and cost libraries: a number comes
   out wrong and nothing raises.
+- [wiretruth](https://github.com/kartsan03/wiretruth), by kartsan03, checks what the provider SDK
+  returns to the caller, from verbatim recorded responses. spantruth checks what the
+  instrumentation writes on the span. This project was called wiretruth until 2026-10-12 and took
+  its current name so the two stay easy to tell apart.
 
 ## Contributing
 
 Contributions are welcome, and so are disputes. If you maintain one of these libraries and a cell
-is unfair, [tell us](https://github.com/Plexito-de/wiretruth/issues/new?template=dispute.yml): we
+is unfair, [tell us](https://github.com/Plexito-de/spantruth/issues/new?template=dispute.yml): we
 decide every dispute on whether the cited rule says what the check claims. To add a library, a
 provider or a scenario, read [CONTRIBUTING.md](CONTRIBUTING.md). First-time contributors sign the
 [Plexito CLA](https://github.com/Plexito-de/.github/blob/main/cla/INDIVIDUAL.md) with one comment

@@ -1,6 +1,6 @@
 [project]
-name = "wiretruth"
-version = "0.1.0"
+name = "spantruth"
+version = "0.2.0"
 description = "Checks the values LLM instrumentation libraries report against what the provider actually sent."
 readme = "README.md"
 license = "Apache-2.0"
@@ -24,12 +24,12 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Plexito-de/wiretruth"
-Issues = "https://github.com/Plexito-de/wiretruth/issues"
-Report = "https://plexito-de.github.io/wiretruth/"
+Homepage = "https://github.com/Plexito-de/spantruth"
+Issues = "https://github.com/Plexito-de/spantruth/issues"
+Report = "https://plexito-de.github.io/spantruth/"
 
 [project.scripts]
-wiretruth = "wiretruth.cli:main"
+spantruth = "spantruth.cli:main"
 
 [dependency-groups]
 test = [
@@ -47,7 +47,7 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wiretruth"]
+packages = ["src/spantruth"]
 
 [tool.uv]
 default-groups = ["test", "lint"]

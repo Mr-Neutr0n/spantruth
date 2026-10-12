@@ -8,7 +8,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first. It applies to you too.
   harness or a check is wrong. Find which one.
 - Never change a fixture value to make a library pass. Fixtures follow the provider's wire format,
   and `test_fixtures_parse_with_sdk_types` proves it.
-- A check cites a rule in `src/wiretruth/rules.py`. A new check needs a rule with a permalink to
+- A check cites a rule in `src/spantruth/rules.py`. A new check needs a rule with a permalink to
   the sentence it applies.
 - Every string from a results document is data. `site.py` escapes all of it. Keep it that way.
 - Keep the harness offline. Subject processes get a dead proxy, so a client that honors the proxy
