@@ -136,10 +136,11 @@ endpoint per library, at `https://plexito-de.github.io/spantruth/badges/<subject
   stream cut after eight recorded events replays kartsan03/wiretruth's
   `stream.missing-finish-abort` fixture, vendored unchanged with its provenance.
 - **Subjects:** the [OpenTelemetry GenAI instrumentation](https://github.com/open-telemetry/opentelemetry-python-genai),
-  [OpenLLMetry](https://github.com/traceloop/openllmetry) and
-  [OpenInference](https://github.com/Arize-ai/openinference), plus the two controls.
+  [OpenLLMetry](https://github.com/traceloop/openllmetry),
+  [OpenInference](https://github.com/Arize-ai/openinference) and
+  [Pydantic Logfire](https://github.com/pydantic/logfire), plus the two controls.
 
-Next: Logfire, OpenLIT, the JavaScript libraries, AWS Bedrock, Gemini and the rest of the OpenAI
+Next: OpenLIT, the JavaScript libraries, AWS Bedrock, Gemini and the rest of the OpenAI
 Responses API. [Help is welcome](CONTRIBUTING.md#ways-to-help).
 
 ## Related work

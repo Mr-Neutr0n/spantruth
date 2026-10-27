@@ -26,6 +26,17 @@ def test_an_override_replaces_only_the_package_it_names():
     ]
 
 
+def test_logfire_is_pinned_and_tracked():
+    lib = subjects.load("logfire")
+    assert lib.title == "Pydantic Logfire"
+    assert lib.providers == ("openai", "anthropic")
+    assert lib.homepage == "https://github.com/pydantic/logfire"
+    assert "logfire==5.4.0" in subjects.requirements(lib, latest=False)
+    latest = subjects.requirements(lib, latest=True)
+    assert "logfire" in latest
+    assert "logfire==5.4.0" not in latest
+
+
 def test_an_override_for_a_package_nobody_installs_is_refused(capsys):
     code = cli.main(["run", "--subject", "control-honest", "--with", PR_HEAD, "--out", "/dev/null"])
     assert code == 2

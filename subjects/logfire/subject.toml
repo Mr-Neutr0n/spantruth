@@ -1,0 +1,5 @@
+title = "Pydantic Logfire"
+homepage = "https://github.com/pydantic/logfire"
+providers = ["openai", "anthropic"]
+packages = ["logfire==5.4.0"]
+track = ["logfire"]
