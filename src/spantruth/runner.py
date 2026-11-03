@@ -51,6 +51,7 @@ def _env(subject: subjects.Subject, otlp: str, shim: Path) -> dict[str, str]:
             "PYTHONDONTWRITEBYTECODE": "1",
             "PYTHONPATH": str(shim),
         }
+        | subjects.base().get("env", {})
         | subject.env
     )
 

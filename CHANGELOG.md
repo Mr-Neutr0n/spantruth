@@ -15,9 +15,23 @@ All notable changes to this project are documented here. The format follows
 - spantruth runs without a clone. The wheel carries the subjects and the known issues, so
   `uvx --from git+https://github.com/Plexito-de/spantruth spantruth run` works in any directory.
 - `spantruth list` names the directory that the subjects come from.
+- `anthropic-sdk`, a subject for the Anthropic SDK's built-in tracing, which is on by default since
+  anthropic 1.14.0. Its spans get the tokens, the cache counts and the errors right, and record the
+  stop reason as `anthropic.message.stop_reason` instead of `gen_ai.response.finish_reasons`.
+- `subjects/_base.toml` can set environment variables for every subject (`[env]`). A subject
+  package replaces the base package of the same name, for a library that cannot run the base SDK
+  versions.
 
 ### Changed
 
+- Subjects run openai 3.42.1 and anthropic 2.4.0 (were 3.28.0 and 1.13.0) and opentelemetry-sdk
+  1.45.2. OpenInference moves to openai 0.1.69 and anthropic 3.3.0, which fix both of its early-exit
+  findings, and the OpenTelemetry GenAI instrumentation to 1.3b0. `--latest` also unpins openai and
+  anthropic, so the nightly run of the latest releases runs the SDKs that people install today.
+- The Anthropic SDK's own spans are off for the library subjects (`ANTHROPIC_OPEN_TELEMETRY=false`),
+  so each library is graded on its own spans. With them on, every library reports each Anthropic
+  call on two spans.
+- The test environment checks the fixtures with the SDK versions that the subjects run.
 - A run writes nothing into the working directory by default. Environments go to
   `~/.cache/spantruth/venvs` and results to `~/.cache/spantruth/results/latest.json`, or under
   `$XDG_CACHE_HOME/spantruth`.

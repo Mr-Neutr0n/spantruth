@@ -26,20 +26,22 @@ These bugs live on the paths that normal tests skip: a stream the app leaves ear
 that drops, a 429, a prompt-cache hit. spantruth tests exactly those paths, for every library,
 in the same way.
 
-## What the first run shows
+## What the run shows
 
-Pinned versions, 2026-10-10. Every finding but one was already reported upstream, by the people
-credited below. spantruth reproduces each of them on the same footing, and the nightly run against
-the latest releases shows when a fix lands.
+Pinned versions, 2026-11-03: openai 3.42.1 and anthropic 2.4.0 under every library. Each finding
+is reported upstream, by the people credited below, and the nightly run against the latest
+releases shows when a fix lands.
 
 | Library | Finding | Upstream |
 | --- | --- | --- |
 | OpenLLMetry | Anthropic streams overcount output tokens. `message_delta` carries the cumulative count, and the wrapper adds it to the count in `message_start` (`1` in the scenarios). | [#4377](https://github.com/traceloop/openllmetry/pull/4377), by @arthi-arumugam-git |
-| OpenLLMetry | A sync Anthropic stream that fails mid-way (a dropped connection, an `overloaded_error` event) never ends its span. The async stream ends it with status `ERROR`, but without `error.type`. | not reported yet |
+| OpenLLMetry | A sync Anthropic stream that fails mid-way (a dropped connection, an `overloaded_error` event) never ends its span. The async stream ends it with status `ERROR`, but without `error.type`. | [#4643](https://github.com/traceloop/openllmetry/issues/4643), by @chrikrah |
 | OpenLLMetry | An OpenAI stream that fails mid-way ends its span with status `OK`, sync and async. | [#4535](https://github.com/traceloop/openllmetry/pull/4535), by @feiiiiii5 |
 | OpenLLMetry | An Anthropic stream the app closes early never ends its span. | [#4536](https://github.com/traceloop/openllmetry/issues/4536), by @armanunix |
-| OpenInference | A stream the app closes early never ends its span: OpenAI with `close()` or a `with` block, Anthropic with `close()`. | [#3790](https://github.com/Arize-ai/openinference/issues/3790), by @feiiiiii5; [#3930](https://github.com/Arize-ai/openinference/issues/3930), by @armanunix |
+| OpenInference | Every scenario passes. The early-exit spans that never ended are fixed in `openinference-instrumentation-openai` 0.1.66 and `openinference-instrumentation-anthropic` 3.1.0. | [#3790](https://github.com/Arize-ai/openinference/issues/3790), by @feiiiiii5; [#3930](https://github.com/Arize-ai/openinference/issues/3930), by @armanunix |
 | OpenTelemetry GenAI instrumentation | Every scenario passes. | |
+| Anthropic SDK, built-in tracing | The SDK's own spans get the tokens, the cache counts and the errors right, but record the stop reason as `anthropic.message.stop_reason`, so `gen_ai.response.finish_reasons` is missing. | not reported yet |
+| Any library with anthropic 1.14.0 or later | The SDK creates its own span for every call when a tracer provider is registered, so a library on top reports each call on two spans, and a backend that sums token counts counts them twice. spantruth turns the SDK's spans off for the library subjects (`ANTHROPIC_OPEN_TELEMETRY=false`), and grades them as their own subject. | not reported yet |
 
 Each finding on the report shows the expected value, the reported value, the attribute it was
 read from, and the rule it applies, with a link wherever a spec states it.
@@ -104,7 +106,7 @@ Each subject gets its own virtual environment under `~/.cache/spantruth/venvs`
 (`$XDG_CACHE_HOME/spantruth` when that is set). A run writes nothing into the directory you run it
 in: without `--out`, the results go to `~/.cache/spantruth/results/latest.json`. `--latest` unpins
 the library's own packages. The run behind the table above is committed as
-[`results/2026-10-10-pinned.json`](results/2026-10-10-pinned.json).
+[`results/2026-11-03-pinned.json`](results/2026-11-03-pinned.json).
 
 To work on spantruth itself, use a clone: `git clone https://github.com/Plexito-de/spantruth.git`,
 then `uv sync` and `uv run spantruth list` in it.
@@ -139,8 +141,9 @@ endpoint per library, at `https://plexito-de.github.io/spantruth/badges/<subject
   stream cut after eight recorded events replays kartsan03/wiretruth's
   `stream.missing-finish-abort` fixture, vendored unchanged with its provenance.
 - **Subjects:** the [OpenTelemetry GenAI instrumentation](https://github.com/open-telemetry/opentelemetry-python-genai),
-  [OpenLLMetry](https://github.com/traceloop/openllmetry) and
-  [OpenInference](https://github.com/Arize-ai/openinference), plus the two controls.
+  [OpenLLMetry](https://github.com/traceloop/openllmetry),
+  [OpenInference](https://github.com/Arize-ai/openinference), and the built-in tracing of the
+  [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-python), plus the two controls.
 
 Next: Logfire, OpenLIT, the JavaScript libraries, AWS Bedrock, Gemini and the rest of the OpenAI
 Responses API. [Help is welcome](CONTRIBUTING.md#ways-to-help).

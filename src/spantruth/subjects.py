@@ -65,14 +65,19 @@ def package_name(spec: str) -> str:
 
 
 def requirements(subject: Subject, latest: bool, overrides: tuple[str, ...] = ()) -> list[str]:
-    """Pinned requirements, or with the subject's own packages unpinned for `--latest`.
+    """Pinned requirements, or with the tracked packages unpinned for `--latest`.
 
-    An override replaces the requirement for the same package, for example with a pull
+    A subject package replaces the base package of the same name, for a library that cannot run
+    the base SDK versions. `--latest` unpins the subject's `track` list and the base `track` list
+    (the SDKs). An override replaces the requirement for the same package, for example with a pull
     request's head: `pkg @ git+https://github.com/org/repo@refs/pull/1/head#subdirectory=pkg`.
     """
-    reqs = list(base()["packages"]) + list(subject.packages)
+    common = base()
+    own = {package_name(p) for p in subject.packages}
+    reqs = [r for r in common["packages"] if package_name(r) not in own] + list(subject.packages)
     if latest:
-        reqs = [r.split("==")[0] if r.split("==")[0] in subject.track else r for r in reqs]
+        track = {package_name(t) for t in (*common.get("track", ()), *subject.track)}
+        reqs = [package_name(r) if package_name(r) in track else r for r in reqs]
     by_name = {package_name(o): o for o in overrides}
     return [by_name.get(package_name(r), r) for r in reqs]
 
