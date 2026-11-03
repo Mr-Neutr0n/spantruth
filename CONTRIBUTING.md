@@ -74,6 +74,19 @@ A scenario ID, such as `anthropic/stream`, and a check ID, such as `output_token
 meaning. Maintainers keep expectation files in their own repositories that name them, so a change
 of meaning would silently change their CI. A new meaning gets a new ID.
 
+## How we review
+
+A contributor should never have to guess when they are done. So a maintainer's review follows these
+rules:
+
+1. **The first review is complete.** It names every change that blocks the merge, in one comment.
+   Anything not in it does not block.
+2. **Later rounds check only those changes**, plus anything the new code itself breaks. A new idea
+   after the first review is not a new condition. The maintainer opens an issue for it or does it
+   after the merge.
+3. **A conflict that `main` caused is the maintainer's to resolve**, not the contributor's.
+4. **Optional suggestions are marked as optional**, and they never hold a merge.
+
 ## Pull requests
 
 - One topic per pull request. Write the title as a
