@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from . import __version__, checks, scenarios, subjects
+from . import __version__, checks, paths, scenarios, subjects
 from .conventions import SEMCONV_GENAI_COMMIT
 from .mockserver import MockServer
 from .receiver import Receiver
@@ -28,7 +28,18 @@ OFFLINE = {
 }
 
 
-def _env(subject: subjects.Subject, otlp: str) -> dict[str, str]:
+def driver_path(directory: Path) -> Path:
+    """Make a directory that holds only the running spantruth package, for PYTHONPATH.
+
+    A subject environment then runs the driver of this spantruth, from a clone or from a wheel,
+    and imports nothing else from the host environment.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "spantruth").symlink_to(paths.PACKAGE, target_is_directory=True)
+    return directory
+
+
+def _env(subject: subjects.Subject, otlp: str, shim: Path) -> dict[str, str]:
     keep = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
     return (
         keep
@@ -38,15 +49,20 @@ def _env(subject: subjects.Subject, otlp: str) -> dict[str, str]:
             "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
             "OTEL_SERVICE_NAME": "spantruth",
             "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONPATH": str(shim),
         }
         | subject.env
     )
 
 
-def _driver(py: Path, args: list[str], env: dict[str, str]) -> subprocess.CompletedProcess:
+def _driver(
+    py: Path, args: list[str], env: dict[str, str], cwd: Path
+) -> subprocess.CompletedProcess:
+    # -P and a scratch working directory: nothing in the caller's directory can shadow a module.
     return subprocess.run(
-        [str(py), "-m", "spantruth.driver", *args],
+        [str(py), "-P", "-m", "spantruth.driver", *args],
         env=env,
+        cwd=cwd,
         capture_output=True,
         text=True,
         timeout=CELL_TIMEOUT,
@@ -66,6 +82,7 @@ def run_subject(
     mock: MockServer,
     cache: Path,
     latest: bool,
+    shim: Path,
     overrides: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     ids = [i for i in ids if scenarios.get(i).provider in subject.providers]
@@ -93,7 +110,8 @@ def run_subject(
             proc = _driver(
                 py,
                 ["baseline", *ids, "--mock", mock.url, "--out", str(base_file)],
-                _env(subject, "http://127.0.0.1:9"),
+                _env(subject, "http://127.0.0.1:9", shim),
+                Path(tmp),
             )
             if proc.returncode != 0:
                 out["error"] = f"baseline failed: {proc.stderr[-2000:]}"
@@ -101,12 +119,12 @@ def run_subject(
             out["error"] = "baseline timed out"
         baselines = _read(base_file) or {}
         for sid in ids:
-            out["cells"][sid] = _cell(subject, sid, py, mock, Path(tmp), baselines.get(sid))
+            out["cells"][sid] = _cell(subject, sid, py, mock, Path(tmp), shim, baselines.get(sid))
     _downgrade_unsupported_streams(out["cells"])
     return out
 
 
-def _cell(subject, sid, py, mock, tmp: Path, base: dict | None) -> dict[str, Any]:
+def _cell(subject, sid, py, mock, tmp: Path, shim: Path, base: dict | None) -> dict[str, Any]:
     sc = scenarios.get(sid)
     obs_file = tmp / f"{sc.key}.json"
     stderr = ""
@@ -126,7 +144,8 @@ def _cell(subject, sid, py, mock, tmp: Path, base: dict | None) -> dict[str, Any
                     "--out",
                     str(obs_file),
                 ],
-                _env(subject, rx.url),
+                _env(subject, rx.url, shim),
+                tmp,
             )
             stderr = proc.stderr[-2000:]
         except subprocess.TimeoutExpired:
@@ -193,9 +212,14 @@ def run(
     }
     if overrides:
         doc["overrides"] = list(overrides)
-    with MockServer() as mock, ThreadPoolExecutor(max_workers=jobs) as pool:
+    with (
+        tempfile.TemporaryDirectory() as tmp,
+        MockServer() as mock,
+        ThreadPoolExecutor(max_workers=jobs) as pool,
+    ):
+        shim = driver_path(Path(tmp))
         futures = {
-            n: pool.submit(run_subject, subjects.load(n), ids, mock, cache, latest, overrides)
+            n: pool.submit(run_subject, subjects.load(n), ids, mock, cache, latest, shim, overrides)
             for n in names
         }
         doc["subjects"] = {n: f.result() for n, f in futures.items()}

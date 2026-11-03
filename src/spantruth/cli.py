@@ -7,14 +7,14 @@ import json
 import sys
 from pathlib import Path
 
-from . import report, runner, scenarios, subjects
+from . import paths, report, runner, scenarios, subjects
 
 
 def _list(_: argparse.Namespace) -> int:
     print("Scenarios:")
     for sid, sc in scenarios.SCENARIOS.items():
         print(f"  {sid:38} {sc.title}")
-    print("\nSubjects:")
+    print(f"\nSubjects, from {subjects.SUBJECTS}:")
     for name in subjects.all_names():
         s = subjects.load(name)
         print(f"  {name:38} {s.title} ({', '.join(s.providers)})")
@@ -65,7 +65,8 @@ def _report(args: argparse.Namespace) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def parser() -> argparse.ArgumentParser:
+    cache = paths.cache_dir()
     parser = argparse.ArgumentParser(
         prog="spantruth",
         description="Check what LLM instrumentation reports against what the provider sent.",
@@ -83,8 +84,16 @@ def main(argv: list[str] | None = None) -> int:
         metavar="SPEC",
         help="replace a package with this requirement, such as a pull request git ref; repeatable",
     )
-    run.add_argument("--out", default="results/latest.json")
-    run.add_argument("--cache", default=".spantruth/venvs")
+    run.add_argument(
+        "--out",
+        default=str(cache / "results" / "latest.json"),
+        help="where to write the results document (default: %(default)s)",
+    )
+    run.add_argument(
+        "--cache",
+        default=str(cache / "venvs"),
+        help="where to keep the subject environments (default: %(default)s)",
+    )
     run.add_argument("--jobs", type=int, default=4)
     run.set_defaults(func=_run)
     rep = sub.add_parser("report", help="render a results document")
@@ -95,15 +104,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     rep.add_argument("--markdown", action="store_true", help="print the Markdown matrix")
     rep.set_defaults(func=_report)
-    args = parser.parse_args(argv)
-    if args.command in ("list", "run") and not subjects.SUBJECTS.is_dir():
-        print(
-            "spantruth runs from a clone, because the subjects live next to the source:\n"
-            "  git clone https://github.com/Plexito-de/spantruth.git && cd spantruth\n"
-            "  uv run spantruth list",
-            file=sys.stderr,
-        )
-        return 2
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parser().parse_args(argv)
     return args.func(args)
 
 

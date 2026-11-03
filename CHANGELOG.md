@@ -12,11 +12,32 @@ All notable changes to this project are documented here. The format follows
   `wiretruth.fixture/v1` format. The first is `openai/responses-stream-missing-finish-abort`, the
   first OpenAI Responses API scenario: eight recorded events, then the connection drops.
 - The reference instrumentation covers the Responses API, so both controls grade it.
+- spantruth runs without a clone. The wheel carries the subjects and the known issues, so
+  `uvx --from git+https://github.com/Plexito-de/spantruth spantruth run` works in any directory.
+- `spantruth list` names the directory that the subjects come from.
+
+### Changed
+
+- A run writes nothing into the working directory by default. Environments go to
+  `~/.cache/spantruth/venvs` and results to `~/.cache/spantruth/results/latest.json`, or under
+  `$XDG_CACHE_HOME/spantruth`.
+- A subject environment no longer holds an editable install of spantruth. The driver of the running
+  spantruth reaches it through `PYTHONPATH`, and it runs with `python -P` in a scratch directory, so
+  nothing in the caller's directory can shadow a module.
+- uv builds subject environments with `--no-config`, so the caller's `uv.toml` or `[tool.uv]` cannot
+  change them. A failed build is retried once.
+- The version has one source, `src/spantruth/__init__.py`, and the release job checks that the tag
+  matches it.
 
 ### Fixed
 
 - The fake provider now drops the connection when `drop_after` equals the number of events, where
   it used to end the stream cleanly.
+
+### Security
+
+- The release workflow uses `pypa/gh-action-pypi-publish` v1.14.3, which fixes
+  [GHSA-5xjx-3w67-w9x9](https://github.com/advisories/GHSA-5xjx-3w67-w9x9).
 
 ## [0.2.0] - 2026-10-12
 

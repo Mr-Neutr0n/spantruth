@@ -6,7 +6,9 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-KNOWN = Path(__file__).resolve().parents[2] / "known_issues.toml"
+from . import paths
+
+KNOWN = paths.data("known_issues.toml")
 
 MARK = {
     "pass": "✅ pass",

@@ -10,8 +10,12 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
-SUBJECTS = REPO / "subjects"
+from . import paths
+
+SUBJECTS = paths.data("subjects")
+# Part of the environment cache key. Raise it when the content of an environment changes, so no
+# environment built the old way is reused. 2: the driver comes from PYTHONPATH, not an install.
+LAYOUT = 2
 
 
 @dataclass(frozen=True)
@@ -73,6 +77,20 @@ def requirements(subject: Subject, latest: bool, overrides: tuple[str, ...] = ()
     return [by_name.get(package_name(r), r) for r in reqs]
 
 
+def _uv(args: list[str], cache: Path, **kwargs) -> subprocess.CompletedProcess:
+    """Run uv without the caller's configuration files, from a directory inside the cache.
+
+    A maintainer's `uv.toml` or `[tool.uv]` (another index, constraints) must not change what a
+    subject environment contains.
+    """
+    return subprocess.run(["uv", *args, "--no-config"], cwd=cache, check=True, text=True, **kwargs)
+
+
+def _build(venv: Path, python: str, reqs: list[str], cache: Path) -> None:
+    _uv(["venv", "--quiet", "--clear", "--python", python, str(venv)], cache)
+    _uv(["pip", "install", "--quiet", "--python", str(venv / "bin" / "python"), *reqs], cache)
+
+
 def environment(
     subject: Subject, cache: Path, latest: bool = False, overrides: tuple[str, ...] = ()
 ) -> tuple[Path, dict[str, str]]:
@@ -80,23 +98,20 @@ def environment(
     reqs = requirements(subject, latest, overrides)
     overridden = reqs != requirements(subject, latest)
     python = base()["python"]
-    key = hashlib.sha256(json.dumps([python, reqs, latest]).encode()).hexdigest()[:12]
+    key = hashlib.sha256(json.dumps([LAYOUT, python, reqs, latest]).encode()).hexdigest()[:12]
+    cache.mkdir(parents=True, exist_ok=True)
     venv = cache / f"{subject.name}-{key}"
     py = venv / "bin" / "python"
     ready = venv / ".ready"
     # A git ref such as a pull request head moves, so an override is always reinstalled.
     if not ready.exists() or latest or overridden:
-        subprocess.run(
-            ["uv", "venv", "--quiet", "--clear", "--python", python, str(venv)], check=True
-        )
-        install = ["uv", "pip", "install", "--quiet", "--python", str(py)]
-        subprocess.run([*install, *reqs], check=True)
-        # Editable, so the driver in every cached environment is always the current source.
-        subprocess.run([*install, "--no-deps", "-e", str(REPO)], check=True)
+        try:
+            _build(venv, python, reqs, cache)
+        except subprocess.CalledProcessError:
+            # Once more: a maintainer's CI must not fail on one PyPI hiccup.
+            _build(venv, python, reqs, cache)
         ready.write_text("\n".join(reqs))
-    freeze = subprocess.run(
-        ["uv", "pip", "freeze", "--python", str(py)], check=True, capture_output=True, text=True
-    ).stdout
+    freeze = _uv(["pip", "freeze", "--python", str(py)], cache, capture_output=True).stdout
     versions = {}
     for line in freeze.splitlines():
         # `name==1.2.3`, or `name @ git+https://...@<sha>` for an override from a git ref.

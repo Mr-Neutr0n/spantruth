@@ -30,9 +30,3 @@ def test_an_override_for_a_package_nobody_installs_is_refused(capsys):
     code = cli.main(["run", "--subject", "control-honest", "--with", PR_HEAD, "--out", "/dev/null"])
     assert code == 2
     assert "no selected subject installs" in capsys.readouterr().err
-
-
-def test_cli_without_subjects_points_to_a_clone(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(subjects, "SUBJECTS", tmp_path / "missing")
-    assert cli.main(["list"]) == 2
-    assert "git clone https://github.com/Plexito-de/spantruth" in capsys.readouterr().err

@@ -810,7 +810,6 @@ wheels = [
 
 [[package]]
 name = "spantruth"
-version = "0.2.0"
 source = { editable = "." }
 default-groups = ["lint", "test"]
 dependencies = [

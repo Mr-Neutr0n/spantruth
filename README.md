@@ -90,21 +90,24 @@ library.
 
 ## Run it
 
-You need [uv](https://docs.astral.sh/uv/).
+You need [uv](https://docs.astral.sh/uv/). No clone, no API keys:
 
 ```sh
-git clone https://github.com/Plexito-de/spantruth.git && cd spantruth
-uv sync
-uv run spantruth list                                    # scenarios and subjects
-uv run spantruth run --subject openllmetry               # one library, every scenario
-uv run spantruth run                                     # everything, about 3 minutes
-uv run spantruth report results/latest.json --html site/index.html
+alias spantruth='uvx --from git+https://github.com/Plexito-de/spantruth spantruth'
+spantruth list                                          # scenarios and subjects
+spantruth run --subject openllmetry                     # one library, every scenario
+spantruth run --out results.json                        # everything, about 3 minutes
+spantruth report results.json --html report.html
 ```
 
-Each subject gets its own virtual environment under `.spantruth/venvs`. `--latest` unpins the
-library's own packages. spantruth runs from a clone, because the subjects live next to the source.
-The run behind the table above is committed as
+Each subject gets its own virtual environment under `~/.cache/spantruth/venvs`
+(`$XDG_CACHE_HOME/spantruth` when that is set). A run writes nothing into the directory you run it
+in: without `--out`, the results go to `~/.cache/spantruth/results/latest.json`. `--latest` unpins
+the library's own packages. The run behind the table above is committed as
 [`results/2026-10-10-pinned.json`](results/2026-10-10-pinned.json).
+
+To work on spantruth itself, use a clone: `git clone https://github.com/Plexito-de/spantruth.git`,
+then `uv sync` and `uv run spantruth list` in it.
 
 ### Test a fix before it merges
 
@@ -112,7 +115,7 @@ The run behind the table above is committed as
 branch, or a local checkout. The results record the commit it resolved to.
 
 ```sh
-uv run spantruth run --subject openllmetry --with \
+spantruth run --subject openllmetry --with \
   "opentelemetry-instrumentation-anthropic @ git+https://github.com/traceloop/openllmetry@refs/pull/4377/head#subdirectory=packages/opentelemetry-instrumentation-anthropic"
 ```
 

@@ -1,7 +1,7 @@
 name: Release
 
-# A release is a tag with notes and a wheel on PyPI. The wheel holds the harness and the CLI. A run
-# still needs a clone, because the subjects live next to the source, and the CLI says so.
+# A release is a tag with notes and a wheel on PyPI. The wheel holds the harness, the CLI and the
+# subjects, so `uvx spantruth` runs without a clone.
 on:
   push:
     tags: ["v*"]
@@ -9,7 +9,25 @@ on:
 permissions: {}
 
 jobs:
+  check:
+    # The tag, the package version and the wheel name must agree, or the action ref, the wheel and
+    # the results document would each claim a different version.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uv build
+      - name: The tag matches the package version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: test -f "dist/spantruth-${TAG#v}-py3-none-any.whl"
+
   github-release:
+    needs: check
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,6 +37,7 @@ jobs:
           generate_release_notes: true
 
   pypi:
+    needs: check
     runs-on: ubuntu-latest
     # Trusted publishing: PyPI trusts this workflow and this environment, so no token is stored.
     environment: pypi
@@ -31,4 +50,4 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       - run: uv build
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
