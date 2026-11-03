@@ -21,6 +21,12 @@ All notable changes to this project are documented here. The format follows
 - `subjects/_base.toml` can set environment variables for every subject (`[env]`). A subject
   package replaces the base package of the same name, for a library that cannot run the base SDK
   versions.
+- `--subject ./path` runs a subject from any directory, such as the repository of the library it
+  tests. The subject takes the name of its directory.
+- `--with ./path` installs a local checkout in place of a released package. The package name comes
+  from the checkout's `pyproject.toml`.
+- A subject that cannot load, an unknown scenario, or two subjects with one name is one error line
+  and exit code 2, not a traceback.
 
 ### Changed
 

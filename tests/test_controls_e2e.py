@@ -8,7 +8,7 @@ import tomllib
 
 import pytest
 
-from spantruth import runner, scenarios
+from spantruth import runner, scenarios, subjects
 from spantruth.subjects import SUBJECTS
 
 pytestmark = [pytest.mark.slow, pytest.mark.external, pytest.mark.timeout(900)]
@@ -17,7 +17,8 @@ pytestmark = [pytest.mark.slow, pytest.mark.external, pytest.mark.timeout(900)]
 @pytest.fixture(scope="module")
 def doc(tmp_path_factory):
     cache = tmp_path_factory.mktemp("venvs")
-    return runner.run(["control-honest", "control-faulty"], list(scenarios.SCENARIOS), cache)
+    controls = [subjects.load("control-honest"), subjects.load("control-faulty")]
+    return runner.run(controls, list(scenarios.SCENARIOS), cache)
 
 
 def failing(cell):

@@ -111,14 +111,24 @@ the library's own packages. The run behind the table above is committed as
 To work on spantruth itself, use a clone: `git clone https://github.com/Plexito-de/spantruth.git`,
 then `uv sync` and `uv run spantruth list` in it.
 
-### Test a fix before it merges
+### Test your own library, and a fix before it merges
 
-`--with` replaces one package of a subject with any pip requirement: a pull request's head, a
-branch, or a local checkout. The results record the commit it resolved to.
+`--with` replaces one package of a subject with a local checkout, a pull request's head, a
+branch, or a version. A checkout is named by its `pyproject.toml`, and the results record what
+each value resolved to.
 
 ```sh
+spantruth run --subject openllmetry --with ./packages/opentelemetry-instrumentation-anthropic
 spantruth run --subject openllmetry --with \
   "opentelemetry-instrumentation-anthropic @ git+https://github.com/traceloop/openllmetry@refs/pull/4377/head#subdirectory=packages/opentelemetry-instrumentation-anthropic"
+```
+
+A subject can live in your own repository. Copy the two files of a subject in
+[`subjects/`](subjects/), `subject.toml` and `instrument.py`, into a directory and run it by its
+path. A value with a slash is a path, and a value without one is a built-in subject:
+
+```sh
+spantruth run --subject ./spantruth
 ```
 
 ### Show the result

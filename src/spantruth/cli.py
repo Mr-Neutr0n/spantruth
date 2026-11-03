@@ -21,24 +21,33 @@ def _list(_: argparse.Namespace) -> int:
     return 0
 
 
+def _usage(message: object) -> int:
+    print(f"spantruth: {message}", file=sys.stderr)
+    return 2
+
+
 def _run(args: argparse.Namespace) -> int:
-    names = args.subject or subjects.all_names()
-    ids = args.scenario or list(scenarios.SCENARIOS)
-    for sid in ids:
-        scenarios.get(sid)
-    overrides = tuple(args.overrides or ())
+    try:
+        selected = [subjects.load(ref) for ref in args.subject or subjects.all_names()]
+        overrides = tuple(subjects.resolve_override(spec) for spec in args.overrides or ())
+        ids = args.scenario or list(scenarios.SCENARIOS)
+        for sid in ids:
+            scenarios.get(sid)
+    except subjects.SubjectError as exc:
+        return _usage(exc)
+    except KeyError as exc:
+        return _usage(exc.args[0])
+    names = [s.name for s in selected]
+    if twice := sorted({n for n in names if names.count(n) > 1}):
+        return _usage(f"two subjects named {', '.join(twice)}: rename one of the directories")
     installed = {
-        subjects.package_name(r)
-        for n in names
-        for r in subjects.requirements(subjects.load(n), False)
+        subjects.package_name(r) for s in selected for r in subjects.requirements(s, False)
     }
     for spec in overrides:
-        if subjects.package_name(spec) not in installed:
-            name = subjects.package_name(spec)
-            print(f"--with {spec}: no selected subject installs {name}", file=sys.stderr)
-            return 2
+        if (name := subjects.package_name(spec)) not in installed:
+            return _usage(f"--with {spec}: no selected subject installs {name}")
     doc = runner.run(
-        names, ids, Path(args.cache), latest=args.latest, jobs=args.jobs, overrides=overrides
+        selected, ids, Path(args.cache), latest=args.latest, jobs=args.jobs, overrides=overrides
     )
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -74,7 +83,12 @@ def parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list", help="list scenarios and subjects").set_defaults(func=_list)
     run = sub.add_parser("run", help="run subjects against scenarios")
-    run.add_argument("--subject", action="append", help="subject name, repeatable")
+    run.add_argument(
+        "--subject",
+        action="append",
+        help="a built-in subject name, or a subject directory: a path with a slash, such as "
+        "./spantruth; repeatable",
+    )
     run.add_argument("--scenario", action="append", help="scenario id, repeatable")
     run.add_argument("--latest", action="store_true", help="unpin the subjects' own packages")
     run.add_argument(
@@ -82,7 +96,8 @@ def parser() -> argparse.ArgumentParser:
         dest="overrides",
         action="append",
         metavar="SPEC",
-        help="replace a package with this requirement, such as a pull request git ref; repeatable",
+        help="replace a package with this requirement: a version, a pull request git ref, or a "
+        "local checkout (a path with a slash); repeatable",
     )
     run.add_argument(
         "--out",

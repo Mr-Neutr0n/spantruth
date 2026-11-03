@@ -185,7 +185,7 @@ def _downgrade_unsupported_streams(cells: dict[str, dict]) -> None:
 
 
 def run(
-    names: list[str],
+    selected: list[subjects.Subject],
     ids: list[str],
     cache: Path,
     latest: bool = False,
@@ -220,8 +220,8 @@ def run(
     ):
         shim = driver_path(Path(tmp))
         futures = {
-            n: pool.submit(run_subject, subjects.load(n), ids, mock, cache, latest, shim, overrides)
-            for n in names
+            s.name: pool.submit(run_subject, s, ids, mock, cache, latest, shim, overrides)
+            for s in selected
         }
         doc["subjects"] = {n: f.result() for n, f in futures.items()}
     return doc

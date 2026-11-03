@@ -1,4 +1,8 @@
-"""Subjects: one directory per library under `subjects/`, each with its own environment."""
+"""Subjects: one directory per library, each with its own environment.
+
+The built-in subjects are the directories in `subjects/`. A subject can also live anywhere, for
+example in the repository of the library it tests, and be named by its path.
+"""
 
 from __future__ import annotations
 
@@ -10,12 +14,19 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import paths
+from . import paths, scenarios
 
 SUBJECTS = paths.data("subjects")
 # Part of the environment cache key. Raise it when the content of an environment changes, so no
 # environment built the old way is reused. 2: the driver comes from PYTHONPATH, not an install.
 LAYOUT = 2
+
+
+REQUIRED = ("title", "homepage", "providers")
+
+
+class SubjectError(ValueError):
+    """A subject that cannot be loaded, or a `--with` value that cannot be resolved."""
 
 
 @dataclass(frozen=True)
@@ -25,24 +36,47 @@ class Subject:
     homepage: str
     providers: tuple[str, ...]
     packages: tuple[str, ...]
+    directory: Path
     track: tuple[str, ...] = ()
     kind: str = "library"
     env: dict[str, str] = field(default_factory=dict)
     notes: str = ""
-
-    @property
-    def directory(self) -> Path:
-        return SUBJECTS / self.name
 
 
 def base() -> dict:
     return tomllib.loads((SUBJECTS / "_base.toml").read_text())
 
 
-def load(name: str) -> Subject:
-    data = tomllib.loads((SUBJECTS / name / "subject.toml").read_text())
+def is_path(ref: str) -> bool:
+    """A reference with a slash, or `.` or `..`, is a directory. Anything else is a name."""
+    return "/" in ref or ref in (".", "..")
+
+
+def load(ref: str) -> Subject:
+    """A built-in subject by name, or the subject in a directory, named after the directory."""
+    directory = Path(ref).expanduser().resolve() if is_path(ref) else SUBJECTS / ref
+    config = directory / "subject.toml"
+    if not config.is_file():
+        hint = "" if is_path(ref) else "; run `spantruth list` for the built-in subjects"
+        raise SubjectError(f"no subject {ref!r}: {config} does not exist{hint}")
+    try:
+        data = tomllib.loads(config.read_text())
+    except tomllib.TOMLDecodeError as exc:
+        raise SubjectError(f"{config}: {exc}") from None
+    missing = [key for key in REQUIRED if key not in data]
+    if missing:
+        raise SubjectError(f"{config}: missing {', '.join(missing)}")
+    known = {sc.provider for sc in scenarios.SCENARIOS.values()}
+    unknown = sorted(set(data["providers"]) - known)
+    if unknown:
+        raise SubjectError(
+            f"{config}: unknown provider {', '.join(unknown)}; known: {', '.join(sorted(known))}"
+        )
+    if not (directory / "instrument.py").is_file():
+        raise SubjectError(f"{directory}: no instrument.py")
     return Subject(
-        name=name,
+        name=directory.name,
+        directory=directory,
         title=data["title"],
         homepage=data["homepage"],
         providers=tuple(data["providers"]),
@@ -56,6 +90,25 @@ def load(name: str) -> Subject:
 
 def all_names() -> list[str]:
     return sorted(p.parent.name for p in SUBJECTS.glob("*/subject.toml"))
+
+
+def resolve_override(spec: str) -> str:
+    """A `--with` value as a requirement. A local checkout becomes `<name> @ file:///abs/path`.
+
+    A value is a checkout when it is a directory and has a slash or starts with a dot, the rule
+    pip uses, so a bare package name never turns into a path by accident.
+    """
+    path = Path(spec).expanduser()
+    if not (("/" in spec or spec.startswith(".")) and path.is_dir()):
+        return spec
+    pyproject = path / "pyproject.toml"
+    meta = tomllib.loads(pyproject.read_text()) if pyproject.is_file() else {}
+    name = meta.get("project", {}).get("name") or meta.get("tool", {}).get("poetry", {}).get("name")
+    if not name:
+        raise SubjectError(
+            f"--with {spec}: {pyproject} names no package ([project].name or [tool.poetry].name)"
+        )
+    return f"{name} @ {path.resolve().as_uri()}"
 
 
 def package_name(spec: str) -> str:
