@@ -1,14 +1,13 @@
 """The falsification of the whole suite: both controls, end to end, in real subprocesses.
 
 control-honest has to pass every check. control-faulty has to fail exactly the checks in its
-expected.toml. A harness change that breaks either is a harness bug, whatever it looks like.
+expected.toml, compared by the same code that compares a maintainer's expectation file. A harness
+change that breaks either is a harness bug, whatever it looks like.
 """
-
-import tomllib
 
 import pytest
 
-from spantruth import runner, scenarios, subjects
+from spantruth import expectations, runner, scenarios, subjects
 from spantruth.subjects import SUBJECTS
 
 pytestmark = [pytest.mark.slow, pytest.mark.external, pytest.mark.timeout(900)]
@@ -21,19 +20,19 @@ def doc(tmp_path_factory):
     return runner.run(controls, list(scenarios.SCENARIOS), cache)
 
 
-def failing(cell):
-    return {c["id"]: c["verdict"] for c in cell["checks"] if c["verdict"] not in ("pass", "n/a")}
+def test_the_run_is_complete(doc):
+    assert runner.incomplete(doc) == []
 
 
 def test_honest_control_passes_every_scenario(doc):
-    cells = doc["subjects"]["control-honest"]["cells"]
-    assert set(cells) == set(scenarios.SCENARIOS)
-    bad = {sid: failing(cell) for sid, cell in cells.items() if failing(cell)}
-    assert bad == {}
+    result = doc["subjects"]["control-honest"]
+    assert set(result["cells"]) == set(scenarios.SCENARIOS)
+    assert expectations.failing(result) == {}
 
 
 def test_faulty_control_fails_exactly_its_planted_faults(doc):
-    expected = tomllib.loads((SUBJECTS / "control-faulty" / "expected.toml").read_text())
-    cells = doc["subjects"]["control-faulty"]["cells"]
-    got = {sid: failing(cell) for sid, cell in cells.items() if failing(cell)}
+    result = doc["subjects"]["control-faulty"]
+    expected = expectations.load(SUBJECTS / "control-faulty" / "expected.toml")
+    got = expectations.failing(result)
+    assert expectations.compare(expected, got, ran=set(result["cells"])) == []
     assert got == expected

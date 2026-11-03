@@ -313,6 +313,27 @@ SCENARIOS: dict[str, Scenario] = {
 }
 
 
+def depends_on(scenario_id: str) -> str | None:
+    """The scenario whose cell decides this one's verdict: an early exit depends on its full stream.
+
+    When a library records no span for the full stream, an early exit is graded as the same gap
+    (`missing`), not as a span lost by the exit. See runner._downgrade_unsupported_streams.
+    """
+    if "early-exit" not in scenario_id:
+        return None
+    full = scenario_id.replace("-early-exit", "").removesuffix("-with")
+    return full if full in SCENARIOS else None
+
+
+def with_dependencies(ids: list[str]) -> list[str]:
+    """The selected scenarios, each once, followed by the scenarios their verdicts depend on."""
+    out = list(dict.fromkeys(ids))
+    for sid in list(out):
+        if (needed := depends_on(sid)) and needed not in out:
+            out.append(needed)
+    return out
+
+
 def get(scenario_id: str) -> Scenario:
     try:
         return SCENARIOS[scenario_id]

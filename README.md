@@ -88,7 +88,7 @@ library.
 | wrong | A reported value does not match the wire. |
 | lost | The span never ended, so no backend ever receives it. |
 | broken | The app saw something different from an uninstrumented run. |
-| inconclusive | The harness could not run the cell. No verdict on the library. |
+| inconclusive | The cell could not be graded: the harness could not run it, or the library's setup raised (`subject.instrument`). |
 
 ## Run it
 
@@ -130,6 +130,27 @@ path. A value with a slash is a path, and a value without one is a built-in subj
 ```sh
 spantruth run --subject ./spantruth
 ```
+
+### Fail CI on a regression, not on a known bug
+
+Record the checks that your library fails today, commit the file, and compare every later run
+with it:
+
+```sh
+spantruth run --subject ./spantruth --write-expect spantruth-expected.toml
+spantruth run --subject ./spantruth --expect spantruth-expected.toml
+```
+
+| Exit code | Meaning |
+| --- | --- |
+| 0 | Every cell ran, and the failing checks equal the expectation file. |
+| 1 | The failing checks differ from the file: a new failure, a fix, or a changed verdict. The output names each one. |
+| 2 | Usage error, for example an unknown scenario in the expectation file. |
+| 3 | spantruth could not build an environment or run a cell. This is not a verdict on the library. |
+
+A fix fails the comparison too, so the file always says what the library fails today: record the
+fix with `--write-expect`. `--summary "$GITHUB_STEP_SUMMARY"` adds the report to a GitHub Actions
+job summary.
 
 ### Show the result
 

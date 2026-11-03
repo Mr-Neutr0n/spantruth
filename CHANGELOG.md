@@ -27,6 +27,11 @@ All notable changes to this project are documented here. The format follows
   from the checkout's `pyproject.toml`.
 - A subject that cannot load, an unknown scenario, or two subjects with one name is one error line
   and exit code 2, not a traceback.
+- `--expect FILE` compares the failing checks of one subject with a file of known failures, in the
+  format of `subjects/control-faulty/expected.toml`, and exits 1 on any difference. `--write-expect
+  FILE` records them. The controls test compares with the same code.
+- `--summary FILE` appends the Markdown report and the differences to a file, such as
+  `$GITHUB_STEP_SUMMARY`.
 
 ### Changed
 
@@ -38,6 +43,12 @@ All notable changes to this project are documented here. The format follows
   so each library is graded on its own spans. With them on, every library reports each Anthropic
   call on two spans.
 - The test environment checks the fixtures with the SDK versions that the subjects run.
+- `spantruth run` exits 3 when it could not build an environment, run a baseline, or get an
+  observation from a cell. It used to exit 0. The nightly report still publishes on 3.
+- When a subject's setup raises, its cells fail the new check `subject.instrument`, with the verdict
+  `inconclusive`, so an expectation file can compare it.
+- A scenario selection brings the scenarios its verdicts depend on: an early exit runs with its
+  full stream.
 - A run writes nothing into the working directory by default. Environments go to
   `~/.cache/spantruth/venvs` and results to `~/.cache/spantruth/results/latest.json`, or under
   `$XDG_CACHE_HOME/spantruth`.

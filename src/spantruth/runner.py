@@ -172,9 +172,7 @@ def _downgrade_unsupported_streams(cells: dict[str, dict]) -> None:
     early-exit cell is `missing`, not `lost`.
     """
     for sid, cell in cells.items():
-        if "early-exit" not in sid:
-            continue
-        stream = cells.get(sid.replace("-early-exit", "").removesuffix("-with"))
+        stream = cells.get(scenarios.depends_on(sid) or "")
         if stream and any(
             c["id"] == "span.recorded" and c["verdict"] == "missing" for c in stream["checks"]
         ):
@@ -182,6 +180,21 @@ def _downgrade_unsupported_streams(cells: dict[str, dict]) -> None:
                 if c["verdict"] == "lost":
                     c["verdict"], c["detail"] = "missing", "streaming is not instrumented"
             cell["verdict"] = max((c["verdict"] for c in cell["checks"]), key=checks.SEVERITY.index)
+
+
+def incomplete(doc: dict[str, Any]) -> list[str]:
+    """What the harness could not run: an environment, a baseline, or a cell with no observation.
+
+    A setup that raised (`subject.instrument`) is not in the list. It is a verdict on the subject.
+    """
+    gaps = []
+    for name, result in doc["subjects"].items():
+        if result.get("error"):
+            gaps.append(f"{name}: {result['error'][:300]}")
+        for sid, cell in result["cells"].items():
+            if any(c["id"] == "harness" for c in cell["checks"]):
+                gaps.append(f"{name} {sid}: no observation was written")
+    return gaps
 
 
 def run(

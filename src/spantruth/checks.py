@@ -15,6 +15,8 @@ from .rules import RULES
 
 # Ordered by severity. The cell takes the most severe verdict of its checks.
 SEVERITY = ("n/a", "pass", "missing", "wrong", "lost", "broken", "inconclusive")
+# A failing check is any check that did not pass and applies, `inconclusive` included.
+FAILING = SEVERITY[2:]
 TOKENS = (
     "input_tokens",
     "output_tokens",
@@ -116,7 +118,8 @@ def grade(
     if obs is None or base is None:
         return [Check("harness", "inconclusive", detail="no observation was written")]
     if "instrument_error" in obs:
-        return [Check("harness", "inconclusive", detail=obs["instrument_error"])]
+        # The subject's setup raised. That is a failing check of the subject, not a gap in the run.
+        return [Check("subject.instrument", "inconclusive", detail=obs["instrument_error"])]
     checks = [_app(base, obs)]
     if obs.get("hang"):
         return checks

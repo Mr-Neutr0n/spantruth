@@ -22,6 +22,11 @@ RULES: dict[str, tuple[str, str]] = {
         "terminated due to an error or cancellation.",
         f"{GENAI}/docs/gen-ai/gen-ai-spans.md#L29-L31",
     ),
+    "subject.instrument": (
+        "spantruth rule: the setup that the library's documentation shows runs without an "
+        "exception. When it raises, no cell of the subject can be graded.",
+        "",
+    ),
     "span.recorded": (
         "spantruth rule: a call the application made produces at least one span.",
         "",
