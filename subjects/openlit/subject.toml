@@ -1,0 +1,5 @@
+title = "OpenLIT"
+homepage = "https://github.com/openlit/openlit"
+providers = ["openai", "anthropic"]
+packages = ["openlit==1.45.0", "openai==2.54.0", "anthropic==0.125.0"]
+track = ["openlit"]

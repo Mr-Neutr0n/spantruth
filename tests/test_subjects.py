@@ -60,6 +60,19 @@ def test_latest_also_unpins_the_sdks():
     assert any(r.startswith("opentelemetry-sdk==") for r in reqs)
 
 
+def test_openlit_is_pinned_and_tracked():
+    lib = subjects.load("openlit")
+    assert lib.title == "OpenLIT"
+    assert lib.providers == ("openai", "anthropic")
+    assert lib.homepage == "https://github.com/openlit/openlit"
+    assert "openlit==1.45.0" in subjects.requirements(lib, latest=False)
+    assert "openai==2.54.0" in subjects.requirements(lib, latest=False)
+    assert "anthropic==0.125.0" in subjects.requirements(lib, latest=False)
+    latest = subjects.requirements(lib, latest=True)
+    assert "openlit" in latest
+    assert "openlit==1.45.0" not in latest
+
+
 def test_an_override_for_a_package_nobody_installs_is_refused(capsys):
     code = cli.main(["run", "--subject", "control-honest", "--with", PR_HEAD, "--out", "/dev/null"])
     assert code == 2
