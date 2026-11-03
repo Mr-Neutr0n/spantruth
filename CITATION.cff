@@ -9,8 +9,8 @@ authors:
 repository-code: https://github.com/Plexito-de/spantruth
 url: https://plexito-de.github.io/spantruth/
 license: Apache-2.0
-version: 0.1.0
-date-released: 2026-10-10
+version: 0.3.0
+date-released: 2026-11-03
 keywords:
   - opentelemetry
   - llm observability

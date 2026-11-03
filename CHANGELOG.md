@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-03
+
 ### Added
 
 - A recorded response can be replayed as a scenario, from a fixture in kartsan03/wiretruth's
@@ -131,6 +133,7 @@ All notable changes to this project are documented here. The format follows
 - Subjects: the OpenTelemetry GenAI instrumentation, OpenLLMetry and OpenInference.
 - A Markdown and a static HTML report.
 
-[Unreleased]: https://github.com/Plexito-de/spantruth/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Plexito-de/spantruth/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Plexito-de/spantruth/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Plexito-de/spantruth/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Plexito-de/spantruth/releases/tag/v0.1.0
