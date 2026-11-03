@@ -83,7 +83,9 @@ rules:
    Anything not in it does not block.
 2. **Later rounds check only those changes**, plus anything the new code itself breaks. A new idea
    after the first review is not a new condition. The maintainer opens an issue for it or does it
-   after the merge.
+   after the merge. The one exception is a real problem the first review overlooked, such as a wrong
+   verdict or a broken control. It may block, and the review says plainly that it should have been
+   raised in the first round.
 3. **A conflict that `main` caused is the maintainer's to resolve**, not the contributor's.
 4. **Optional suggestions are marked as optional**, and they never hold a merge.
 

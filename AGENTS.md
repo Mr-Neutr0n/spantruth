@@ -23,4 +23,5 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first. It applies to you too.
   them is in [`.context/`](.context/). Update the plan when an epic ships or changes.
 - When you draft a review of a contributor's pull request, follow "How we review" in
   CONTRIBUTING.md: every blocking change in the first review, nothing new as a condition later.
-  Before a second review, read the first one and check only what it asked for.
+  Before a second review, read the first one and check only what it asked for. A real problem the
+  first review missed may still block, and the review says it should have come in the first round.
