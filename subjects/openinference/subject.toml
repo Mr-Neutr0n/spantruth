@@ -2,7 +2,7 @@ title = "OpenInference"
 homepage = "https://github.com/Arize-ai/openinference"
 providers = ["openai", "anthropic"]
 packages = [
-  "openinference-instrumentation-openai==0.1.65",
-  "openinference-instrumentation-anthropic==3.0.3",
+  "openinference-instrumentation-openai==0.1.69",
+  "openinference-instrumentation-anthropic==3.3.0",
 ]
 track = ["openinference-instrumentation-openai", "openinference-instrumentation-anthropic"]

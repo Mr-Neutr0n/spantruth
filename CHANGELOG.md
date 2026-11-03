@@ -14,11 +14,76 @@ All notable changes to this project are documented here. The format follows
   `wiretruth.fixture/v1` format. The first is `openai/responses-stream-missing-finish-abort`, the
   first OpenAI Responses API scenario: eight recorded events, then the connection drops.
 - The reference instrumentation covers the Responses API, so both controls grade it.
+- spantruth runs without a clone. The wheel carries the subjects and the known issues, so
+  `uvx --from git+https://github.com/Plexito-de/spantruth spantruth run` works in any directory.
+- `spantruth list` names the directory that the subjects come from.
+- `anthropic-sdk`, a subject for the Anthropic SDK's built-in tracing, which is on by default since
+  anthropic 1.14.0. Its spans get the tokens, the cache counts and the errors right, and record the
+  stop reason as `anthropic.message.stop_reason` instead of `gen_ai.response.finish_reasons`.
+- `subjects/_base.toml` can set environment variables for every subject (`[env]`). A subject
+  package replaces the base package of the same name, for a library that cannot run the base SDK
+  versions.
+- `--subject ./path` runs a subject from any directory, such as the repository of the library it
+  tests. The subject takes the name of its directory.
+- `--with ./path` installs a local checkout in place of a released package. The package name comes
+  from the checkout's `pyproject.toml`.
+- A subject that cannot load, an unknown scenario, or two subjects with one name is one error line
+  and exit code 2, not a traceback.
+- `--expect FILE` compares the failing checks of one subject with a file of known failures, in the
+  format of `subjects/control-faulty/expected.toml`, and exits 1 on any difference. `--write-expect
+  FILE` records them. The controls test compares with the same code.
+- `--summary FILE` appends the Markdown report and the differences to a file, such as
+  `$GITHUB_STEP_SUMMARY`.
+- Every finding on the HTML report has its own link, shows its expected and reported values in its
+  summary line, the command that reproduces it, and the spans the library exported. A matrix cell
+  links to its finding.
+- A results document carries `"schema": 1`.
+- A GitHub Action, `Plexito-de/spantruth@<tag>`. One step runs a subject, writes the job summary,
+  uploads the results and the HTML report, and fails with the exit code of the run. It installs
+  spantruth from its own ref. CI runs it on both controls and checks that a run against an empty
+  expectation file fails with exit code 1.
+
+### Changed
+
+- Subjects run openai 3.42.1 and anthropic 2.4.0 (were 3.28.0 and 1.13.0) and opentelemetry-sdk
+  1.45.2. OpenInference moves to openai 0.1.69 and anthropic 3.3.0, which fix both of its early-exit
+  findings, and the OpenTelemetry GenAI instrumentation to 1.3b0. `--latest` also unpins openai and
+  anthropic, so the nightly run of the latest releases runs the SDKs that people install today.
+- The Anthropic SDK's own spans are off for the library subjects (`ANTHROPIC_OPEN_TELEMETRY=false`),
+  so each library is graded on its own spans. With them on, every library reports each Anthropic
+  call on two spans.
+- The test environment checks the fixtures with the SDK versions that the subjects run.
+- `spantruth run` exits 3 when it could not build an environment, run a baseline, or get an
+  observation from a cell. It used to exit 0. The nightly report still publishes on 3.
+- When a subject's setup raises, its cells fail the new check `subject.instrument`, with the verdict
+  `inconclusive`, so an expectation file can compare it.
+- A scenario selection brings the scenarios its verdicts depend on: an early exit runs with its
+  full stream.
+- Finish reasons recorded as a JSON string instead of a string array are still `wrong`, and the
+  finding now says so in words.
+- The findings on the HTML report leave out the controls, whose cells CI checks on every change.
+- A value from a library cannot break a Markdown table cell any more: pipes and newlines are
+  escaped.
+- A run writes nothing into the working directory by default. Environments go to
+  `~/.cache/spantruth/venvs` and results to `~/.cache/spantruth/results/latest.json`, or under
+  `$XDG_CACHE_HOME/spantruth`.
+- A subject environment no longer holds an editable install of spantruth. The driver of the running
+  spantruth reaches it through `PYTHONPATH`, and it runs with `python -P` in a scratch directory, so
+  nothing in the caller's directory can shadow a module.
+- uv builds subject environments with `--no-config`, so the caller's `uv.toml` or `[tool.uv]` cannot
+  change them. A failed build is retried once.
+- The version has one source, `src/spantruth/__init__.py`, and the release job checks that the tag
+  matches it.
 
 ### Fixed
 
 - The fake provider now drops the connection when `drop_after` equals the number of events, where
   it used to end the stream cleanly.
+
+### Security
+
+- The release workflow uses `pypa/gh-action-pypi-publish` v1.14.3, which fixes
+  [GHSA-5xjx-3w67-w9x9](https://github.com/advisories/GHSA-5xjx-3w67-w9x9).
 
 ## [0.2.0] - 2026-10-12
 

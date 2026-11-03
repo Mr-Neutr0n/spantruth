@@ -1,8 +1,20 @@
-# Every subject environment gets these packages at these versions, so cells are comparable.
+# Every subject environment gets these packages at these versions, so cells are comparable. A
+# subject that cannot run them lists its own version of the same package, which replaces this one,
+# and says why in its notes.
 python = "3.12"
 packages = [
-  "openai==3.28.0",
-  "anthropic==1.13.0",
-  "opentelemetry-sdk==1.45.1",
-  "opentelemetry-exporter-otlp-proto-http==1.45.1",
+  "openai==3.42.1",
+  "anthropic==2.4.0",
+  "opentelemetry-sdk==1.45.2",
+  "opentelemetry-exporter-otlp-proto-http==1.45.2",
 ]
+# `--latest` unpins these too, so the nightly run of the latest releases also runs the SDKs that
+# people install today.
+track = ["openai", "anthropic"]
+
+# Variables for every subject process. A subject's own `env` wins.
+[env]
+# The Anthropic SDK creates its own spans since 1.14.0 whenever a tracer provider is registered.
+# Off here, so each library is graded on its own spans. The `anthropic-sdk` subject grades the
+# SDK's spans alone.
+ANTHROPIC_OPEN_TELEMETRY = "false"

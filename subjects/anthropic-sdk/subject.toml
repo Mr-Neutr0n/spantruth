@@ -1,0 +1,7 @@
+title = "Anthropic SDK, built-in tracing"
+homepage = "https://github.com/anthropics/anthropic-sdk-python"
+providers = ["anthropic"]
+notes = "The SDK's own spans, with no instrumentation library. On by default since anthropic 1.14.0 when a tracer provider is registered."
+
+[env]
+ANTHROPIC_OPEN_TELEMETRY = "true"

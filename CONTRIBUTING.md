@@ -48,7 +48,8 @@ uv run ruff check . && uv run ruff format --check .
 
    Use the setup that the library's own documentation shows first. Return nothing, or a list of
    extra tracer providers to flush when the library makes its own.
-3. Run it: `uv run spantruth run --subject <name>`.
+3. Run it: `uv run spantruth run --subject <name>`. A subject directory outside `subjects/` runs
+   the same way, by its path: `--subject ./path/to/subject`.
 4. Read every red cell before you open the pull request. A red cell is a claim about somebody's
    library. Find the line of code that causes it, or tell us in the pull request that you could
    not.

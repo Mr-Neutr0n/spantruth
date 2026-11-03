@@ -1,6 +1,6 @@
 [project]
 name = "spantruth"
-version = "0.2.0"
+dynamic = ["version"]
 description = "Checks the values LLM instrumentation libraries report against what the provider actually sent."
 readme = "README.md"
 license = "Apache-2.0"
@@ -35,10 +35,12 @@ spantruth = "spantruth.cli:main"
 test = [
     "pytest>=9",
     "pytest-timeout>=2.4",
-    "openai>=2",
-    "anthropic>=0.70",
-    "opentelemetry-sdk>=1.30",
-    "opentelemetry-exporter-otlp-proto-http>=1.30",
+    # The fixtures are checked with the SDK types, so test with the SDKs the subjects run.
+    "openai>=3.42.1",
+    "anthropic>=2.4.0",
+    "opentelemetry-sdk>=1.45.2",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.2",
+    "pyyaml>=6",
 ]
 lint = ["ruff>=0.17"]
 
@@ -46,8 +48,17 @@ lint = ["ruff>=0.17"]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
+[tool.hatch.version]
+path = "src/spantruth/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/spantruth"]
+
+# The subjects and the known issues live at the repository root, where contributors find them.
+# The wheel carries both, so an installed spantruth runs without a clone.
+[tool.hatch.build.targets.wheel.force-include]
+"subjects" = "spantruth/subjects"
+"known_issues.toml" = "spantruth/known_issues.toml"
 
 [tool.uv]
 default-groups = ["test", "lint"]

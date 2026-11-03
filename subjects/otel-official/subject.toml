@@ -2,8 +2,8 @@ title = "OpenTelemetry GenAI instrumentation"
 homepage = "https://github.com/open-telemetry/opentelemetry-python-genai"
 providers = ["openai", "anthropic"]
 packages = [
-  "opentelemetry-instrumentation-genai-openai==1.2b0",
-  "opentelemetry-instrumentation-genai-anthropic==1.2b0",
+  "opentelemetry-instrumentation-genai-openai==1.3b0",
+  "opentelemetry-instrumentation-genai-anthropic==1.3b0",
 ]
 track = [
   "opentelemetry-instrumentation-genai-openai",

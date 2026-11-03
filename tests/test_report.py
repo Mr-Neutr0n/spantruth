@@ -92,3 +92,52 @@ def test_badges_count_graded_cells_and_skip_controls():
     }
     d["subjects"]["lib"]["cells"]["anthropic/stream"]["verdict"] = "pass"
     assert report.badges(d)["lib"]["color"] == "brightgreen"
+
+
+def doc_with_spans():
+    d = doc()
+    d["subjects"]["lib"]["notes"] = f"runs older SDKs {HOSTILE}"
+    d["subjects"]["lib"]["cells"]["anthropic/stream"]["spans"] = [
+        {
+            "name": f"chat {HOSTILE}",
+            "scope": "lib.instrumentation",
+            "status": "OK",
+            "attributes": {"gen_ai.usage.output_tokens": 420, HOSTILE: f'"><img src=x>{HOSTILE}'},
+        }
+    ]
+    return d
+
+
+def test_a_finding_anchor_is_stable_and_unique():
+    a = report.finding_id("lib", "anthropic/stream", "output_tokens")
+    assert a == report.finding_id("lib", "anthropic/stream", "output_tokens")
+    assert a != report.finding_id("lib", "anthropic/stream", "input_tokens")
+    assert a != report.finding_id("lib", "anthropic/async-stream", "output_tokens")
+    assert report.finding_id("my lib<x>", "openai/basic", "a.b") == "my-lib-x---openai--basic--a.b"
+
+
+def test_a_finding_carries_its_anchor_and_the_command_that_reproduces_it():
+    (f,) = report.findings(doc(), [])
+    assert f["anchor"] == report.finding_id("lib", "anthropic/stream", "output_tokens")
+    assert f["reproduce"] == "spantruth run --subject lib --scenario anthropic/stream"
+
+
+def test_the_matrix_cell_links_to_its_finding():
+    page = report.html(doc())
+    anchor = report.finding_id("lib", "anthropic/stream", "output_tokens")
+    assert f'href="#{anchor}"' in page and f'id="{anchor}"' in page
+
+
+def test_a_finding_shows_the_exported_spans_and_escapes_them():
+    page = report.html(doc_with_spans())
+    assert "gen_ai.usage.output_tokens" in page and "lib.instrumentation" in page
+    assert "<img" not in page and HOSTILE not in page
+    assert "runs older SDKs" in page
+
+
+def test_a_markdown_value_cannot_break_the_table():
+    d = doc()
+    check = d["subjects"]["lib"]["cells"]["anthropic/stream"]["checks"][0]
+    check["got"], check["where"] = "a|b`c", "x|y"
+    (row,) = [line for line in report.markdown(d).splitlines() if line.startswith("| lib |")]
+    assert row.count("|") - row.count("\\|") == 10

@@ -31,14 +31,22 @@ note = "_ensure_cleanup() sets OK and ends the span before the ERROR status is s
 subject = "openinference"
 scenarios = ["openai/stream-early-exit", "openai/stream-early-exit-with", "openai/async-stream-early-exit"]
 check = "span.ended"
-status = "reported"
+status = "fixed-upstream"
 url = "https://github.com/Arize-ai/openinference/issues/3790"
-note = "Fix proposed in https://github.com/Arize-ai/openinference/pull/3796."
+note = "Fixed in openinference-instrumentation-openai 0.1.66, by https://github.com/Arize-ai/openinference/pull/3796."
 
 [[issue]]
 subject = "openinference"
 scenarios = ["anthropic/stream-early-exit", "anthropic/async-stream-early-exit"]
 check = "span.ended"
-status = "reported"
+status = "fixed-upstream"
 url = "https://github.com/Arize-ai/openinference/issues/3930"
-note = ""
+note = "Fixed in openinference-instrumentation-anthropic 3.1.0, by https://github.com/Arize-ai/openinference/pull/3999."
+
+[[issue]]
+subject = "openllmetry"
+scenarios = ["anthropic/stream-dropped", "anthropic/stream-error-event"]
+check = "span.ended"
+status = "reported"
+url = "https://github.com/traceloop/openllmetry/issues/4643"
+note = "The async stream ends its span with status ERROR, but without error.type."

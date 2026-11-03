@@ -45,6 +45,12 @@ dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:10px 0
 dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}details{border:1px solid var(--line);
 border-radius:10px;background:var(--card);padding:10px 14px;margin:8px 0}
 summary{cursor:pointer}.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0}
+details:target{outline:2px solid var(--link);outline-offset:2px}td.c a{text-decoration:none}
+.gist{display:inline-block;margin:2px 0 0 22px;color:var(--muted);font-size:13px;
+overflow-wrap:anywhere}
+.spans{margin:6px 0 0;font-size:13px}.spans table{margin:4px 0 10px;table-layout:fixed}
+.spans td{padding:3px 8px;overflow-wrap:anywhere}.spans td:first-child{width:42%}
+details code{overflow-wrap:anywhere}
 """
 
 
@@ -54,7 +60,8 @@ def _badge(verdict: str) -> str:
     return f'<span class="v {escape(verdict)}">{escape(verdict)}</span>'
 
 
-def _matrix(doc: dict, names: list[str]) -> str:
+def _matrix(doc: dict, names: list[str], first: dict[tuple[str, str], str]) -> str:
+    """The scenario x subject table. A cell with a finding links to its first finding."""
     head = "".join(
         f'<th scope="col"><a href="{escape(doc["subjects"][n]["homepage"])}">{escape(n)}</a></th>'
         for n in names
@@ -63,7 +70,10 @@ def _matrix(doc: dict, names: list[str]) -> str:
     for sid, sc in doc["scenarios"].items():
         cells = "".join(
             '<td class="c">'
-            + _badge(doc["subjects"][n]["cells"].get(sid, {}).get("verdict", "n/a"))
+            + _linked(
+                _badge(doc["subjects"][n]["cells"].get(sid, {}).get("verdict", "n/a")),
+                first.get((n, sid)),
+            )
             + "</td>"
             for n in names
         )
@@ -77,7 +87,51 @@ def _matrix(doc: dict, names: list[str]) -> str:
     )
 
 
-def _finding(f: dict[str, Any]) -> str:
+def _linked(badge: str, anchor: str | None) -> str:
+    return f'<a href="#{escape(anchor)}">{badge}</a>' if anchor else badge
+
+
+def _spans(spans: list[dict[str, Any]]) -> str:
+    """The spans the library exported for the cell, every key and value escaped."""
+    if not spans:
+        return ""
+    blocks = []
+    for s in spans:
+        rows = "".join(
+            f"<tr><td><code>{escape(str(k))}</code></td><td><code>{escape(str(v))}</code></td></tr>"
+            for k, v in sorted(s.get("attributes", {}).items())
+        )
+        blocks.append(
+            f"<p><code>{escape(s.get('name', ''))}</code> "
+            f'<span class="muted">{escape(s.get("scope", ""))}, status '
+            f"{escape(s.get('status', ''))}</span></p><table>{rows}</table>"
+        )
+    return (
+        f'<details class="spans"><summary>Exported spans ({len(spans)})</summary>'
+        f"{''.join(blocks)}</details>"
+    )
+
+
+def _short(value: Any) -> str:
+    if value is None:
+        return "nothing"
+    if isinstance(value, (list, tuple)):
+        return ", ".join(str(v) for v in value)
+    return str(value)
+
+
+def _gist(f: dict[str, Any]) -> str:
+    """The finding in one line, for the summary that stays visible while the finding is closed."""
+    parts = []
+    if f.get("expected") is not None or f.get("got") is not None:
+        parts.append(f"expected {_short(f.get('expected'))}, reported {_short(f.get('got'))}")
+    if f.get("detail"):
+        parts.append(f["detail"])
+    text = ": ".join(parts)
+    return text if len(text) <= 160 else text[:157] + "..."
+
+
+def _finding(f: dict[str, Any], spans: list[dict[str, Any]]) -> str:
     rule = escape(f.get("rule", ""))
     if f.get("rule_url"):
         rule = f'<a href="{escape(f["rule_url"])}">{rule}</a>'
@@ -97,10 +151,15 @@ def _finding(f: dict[str, Any]) -> str:
             f'<dt>Upstream</dt><dd><a href="{escape(issue["url"])}">'
             f"{escape(issue['status'])}</a>{note}</dd>"
         )
+    rows += f"<dt>Reproduce</dt><dd><code>{escape(f['reproduce'])}</code></dd>"
+    anchor = escape(f["anchor"])
     return (
-        f"<details><summary>{_badge(f['verdict'])} {escape(f['subject'])} · "
-        f"<code>{escape(f['scenario'])}</code> · {escape(f['id'])}</summary>"
-        f"<dl>{rows}<dt>Rule</dt><dd>{rule}</dd></dl></details>"
+        f'<details id="{anchor}"><summary>{_badge(f["verdict"])} {escape(f["subject"])} · '
+        f"<code>{escape(f['scenario'])}</code> · {escape(f['id'])} "
+        f'<a href="#{anchor}" class="muted" title="link to this finding">#</a>'
+        + (f'<br><span class="gist">{escape(gist)}</span>' if (gist := _gist(f)) else "")
+        + "</summary>"
+        f"<dl>{rows}<dt>Rule</dt><dd>{rule}</dd></dl>{_spans(spans)}</details>"
     )
 
 
@@ -112,8 +171,9 @@ def _versions(doc: dict, names: list[str]) -> str:
         err = ""
         if s.get("error"):
             err = f' <span class="v inconclusive">{escape(s["error"][:160])}</span>'
+        notes = f" {escape(s['notes'])}" if s.get("notes") else ""
         items.append(
-            f"<li><strong>{escape(n)}</strong>: {escape(s['title'])}. "
+            f"<li><strong>{escape(n)}</strong>: {escape(s['title'])}.{notes} "
             f'<span class="muted">{escape(pkgs)}</span>{err}</li>'
         )
     return f"<ul>{''.join(items)}</ul>"
@@ -122,7 +182,16 @@ def _versions(doc: dict, names: list[str]) -> str:
 def render(doc: dict) -> str:
     names = _subjects(doc)
     legend = "".join(f"<span>{_badge(k)} {escape(v)}</span>" for k, v in LEGEND.items())
-    found = "".join(_finding(f) for f in findings(doc)) or "<p>No findings.</p>"
+    # The controls' failures are planted and checked in CI, so the list shows the libraries only.
+    every = [f for f in findings(doc) if doc["subjects"][f["subject"]]["kind"] != "control"]
+    first: dict[tuple[str, str], str] = {}
+    for f in every:
+        first.setdefault((f["subject"], f["scenario"]), f["anchor"])
+    found = "".join(
+        _finding(f, doc["subjects"][f["subject"]]["cells"][f["scenario"]].get("spans", []))
+        for f in every
+    )
+    found = found or "<p>No findings.</p>"
     meta = (
         f"spantruth {escape(doc['spantruth'])} · {escape(doc['mode'])} versions · "
         f"{escape(doc['created'])} · Python {escape(doc['python'])} · "
@@ -146,10 +215,11 @@ against the wire.</p>
 <p>Pages: <a href="index.html">pinned versions</a> · <a href="latest.html">latest releases</a>.
 A fix that ships upstream turns its cell green on the latest-releases page first.</p>
 <div class="legend">{legend}</div>
-{_matrix(doc, names)}
+{_matrix(doc, names, first)}
 <p class="muted">The controls run the suite's own reference instrumentation.
 <code>control-honest</code> has to pass every check, and <code>control-faulty</code> has to fail
-exactly its planted faults. If either moves, the suite is wrong, not a library.</p>
+exactly its planted faults. If either moves, the suite is wrong, not a library. CI checks both,
+so their cells are not in the findings below.</p>
 <h2>Findings</h2>
 <p class="muted">Every finding cites the rule it applies. To dispute one, open an issue: a disputed
 finding is marked as such in <a href="https://github.com/Plexito-de/spantruth/blob/main/known_issues.toml">known_issues.toml</a>.</p>

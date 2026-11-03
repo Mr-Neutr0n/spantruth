@@ -197,3 +197,12 @@ def test_error_type_is_not_graded_on_openinference_spans():
     attrs = {"llm.system": "openai", "llm.invocation_parameters": "{}"}
     c = by_id(grade(sc, scenarios.truth(sc), BASE, obs(), [span(attrs, status="ERROR")]))
     assert c["error.status"].verdict == "pass" and c["error.type"].verdict == "n/a"
+
+
+def test_finish_reasons_as_a_json_string_are_wrong_and_say_so():
+    sc = scenarios.get("openai/basic")
+    t, attrs = honest(sc.id)
+    attrs["gen_ai.response.finish_reasons"] = '["stop"]'
+    c = by_id(grade(sc, t, BASE, obs(), [span(attrs)]))["finish_reasons"]
+    assert c.verdict == "wrong"
+    assert "JSON string" in c.detail and "string array" in c.detail
