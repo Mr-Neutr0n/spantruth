@@ -5,6 +5,7 @@ Pure functions over plain records, so every verdict is testable without a subpro
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -77,6 +78,17 @@ def _formula(fact: str, got: int, t: Truth) -> str:
     return ""
 
 
+def _json_list(value: Any) -> list | None:
+    """The list inside a JSON string, for a library that encodes an array attribute as text."""
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = json.loads(value)
+    except ValueError:
+        return None
+    return parsed if isinstance(parsed, list) else None
+
+
 def _value(fact: str, expected: Any, found: list[tuple[SpanRecord, str, Any]], t: Truth) -> Check:
     if expected is None:
         for _span, name, v in found:
@@ -108,6 +120,10 @@ def _value(fact: str, expected: Any, found: list[tuple[SpanRecord, str, Any]], t
             ok = v == t.request_model  # this name does not separate request and response model
         if not ok:
             detail = _formula(fact, v, t) if fact in TOKENS and isinstance(v, int) else ""
+            if fact == "finish_reasons" and same_finish(expected, _json_list(v)):
+                detail = (
+                    f"the right values, recorded as the JSON string {v} instead of a string array"
+                )
             return Check(fact, "wrong", expected, v, name, detail)
     return Check(fact, "pass", expected, found[0][2], found[0][1])
 

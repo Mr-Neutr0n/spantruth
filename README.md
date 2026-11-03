@@ -44,7 +44,9 @@ releases shows when a fix lands.
 | Any library with anthropic 1.14.0 or later | The SDK creates its own span for every call when a tracer provider is registered, so a library on top reports each call on two spans, and a backend that sums token counts counts them twice. spantruth turns the SDK's spans off for the library subjects (`ANTHROPIC_OPEN_TELEMETRY=false`), and grades them as their own subject. | not reported yet |
 
 Each finding on the report shows the expected value, the reported value, the attribute it was
-read from, and the rule it applies, with a link wherever a spec states it.
+read from, and the rule it applies, with a link wherever a spec states it. It also shows the spans
+the library exported and the command that reproduces it, and it has its own link, so an upstream
+issue can point at it.
 
 ## How it works
 

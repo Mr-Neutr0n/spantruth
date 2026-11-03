@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -25,7 +26,8 @@ LEGEND = {
     "wrong": "a reported value does not match the wire",
     "lost": "the span never ended, so no backend ever receives it",
     "broken": "the application saw something different from an uninstrumented run",
-    "inconclusive": "the harness could not run the cell; no verdict on the library",
+    "inconclusive": "the cell could not be graded: the harness could not run it, or the "
+    "library's setup raised",
 }
 
 NOT_GRADED = ("inconclusive", "n/a")
@@ -40,8 +42,20 @@ def known_issues(path: Path = KNOWN) -> list[dict[str, Any]]:
     return tomllib.loads(path.read_text()).get("issue", []) if path.exists() else []
 
 
+def finding_id(subject: str, scenario: str, check: str) -> str:
+    """The anchor of one finding on the report. The same three values give the same anchor."""
+    raw = f"{subject}--{scenario.replace('/', '--')}--{check}"
+    return re.sub(r"[^A-Za-z0-9._-]", "-", raw)
+
+
+def reproduce(subject: str, scenario: str) -> str:
+    """The command that runs one cell again."""
+    return f"spantruth run --subject {subject} --scenario {scenario}"
+
+
 def findings(doc: dict, known: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
-    """Every check that did not pass, with the upstream issue that tracks it, if any."""
+    """Every check that did not pass, with its anchor, the command that reproduces it, and the
+    upstream issue that tracks it, if any."""
     known = known_issues() if known is None else known
     out = []
     for name in _subjects(doc):
@@ -57,7 +71,16 @@ def findings(doc: dict, known: list[dict[str, Any]] | None = None) -> list[dict[
                     ),
                     None,
                 )
-                out.append({"subject": name, "scenario": sid, **c, "issue": issue})
+                out.append(
+                    {
+                        "subject": name,
+                        "scenario": sid,
+                        **c,
+                        "issue": issue,
+                        "anchor": finding_id(name, sid, c["id"]),
+                        "reproduce": reproduce(name, sid),
+                    }
+                )
     return out
 
 
@@ -86,8 +109,16 @@ def _link(issue: dict | None) -> str:
     return f"[{issue['status']}]({issue['url']})" if issue else "—"
 
 
+def _cell(text: Any) -> str:
+    """Text for one Markdown table cell: a pipe or a newline from a library cannot end the cell."""
+    return str(text).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
+
+
 def _fmt(value: Any) -> str:
-    return "—" if value is None else f"`{value}`"
+    if value is None:
+        return "—"
+    text = str(value)
+    return _cell(f"`` {text} ``" if "`" in text else f"`{text}`")
 
 
 def markdown(doc: dict) -> str:
@@ -96,7 +127,7 @@ def markdown(doc: dict) -> str:
         f"spantruth {doc['spantruth']}, {doc['mode']} versions, {doc['created']}",
         *(f"with {spec}" for spec in doc.get("overrides", [])),
         "",
-        "| Scenario | " + " | ".join(names) + " |",
+        "| Scenario | " + " | ".join(_cell(n) for n in names) + " |",
         "| --- | " + " | ".join("---" for _ in names) + " |",
     ]
     for sid in doc["scenarios"]:
@@ -116,9 +147,9 @@ def markdown(doc: dict) -> str:
         ]
         for f in found:
             lines.append(
-                f"| {f['subject']} | `{f['scenario']}` | {f['id']} | {f['verdict']} | "
+                f"| {_cell(f['subject'])} | `{f['scenario']}` | {f['id']} | {f['verdict']} | "
                 f"{_fmt(f['expected'])} | {_fmt(f['got'])} | {_fmt(f['where'])} | "
-                f"{f['detail'].replace('|', '/')[:160]} | "
+                f"{_cell(f['detail'][:160])} | "
                 f"{_link(f['issue'])} |"
             )
     errors = {n: s["error"] for n, s in doc["subjects"].items() if s.get("error")}

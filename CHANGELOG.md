@@ -32,6 +32,10 @@ All notable changes to this project are documented here. The format follows
   FILE` records them. The controls test compares with the same code.
 - `--summary FILE` appends the Markdown report and the differences to a file, such as
   `$GITHUB_STEP_SUMMARY`.
+- Every finding on the HTML report has its own link, shows its expected and reported values in its
+  summary line, the command that reproduces it, and the spans the library exported. A matrix cell
+  links to its finding.
+- A results document carries `"schema": 1`.
 
 ### Changed
 
@@ -49,6 +53,11 @@ All notable changes to this project are documented here. The format follows
   `inconclusive`, so an expectation file can compare it.
 - A scenario selection brings the scenarios its verdicts depend on: an early exit runs with its
   full stream.
+- Finish reasons recorded as a JSON string instead of a string array are still `wrong`, and the
+  finding now says so in words.
+- The findings on the HTML report leave out the controls, whose cells CI checks on every change.
+- A value from a library cannot break a Markdown table cell any more: pipes and newlines are
+  escaped.
 - A run writes nothing into the working directory by default. Environments go to
   `~/.cache/spantruth/venvs` and results to `~/.cache/spantruth/results/latest.json`, or under
   `$XDG_CACHE_HOME/spantruth`.

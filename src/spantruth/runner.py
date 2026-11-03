@@ -18,6 +18,7 @@ from .mockserver import MockServer
 from .receiver import Receiver
 
 CELL_TIMEOUT = 60
+SCHEMA = 1
 # A subject that tries to reach the internet through an HTTP client that honors the proxy
 # variables fails fast. 127.0.0.1 stays reachable.
 OFFLINE = {
@@ -207,6 +208,8 @@ def run(
 ) -> dict[str, Any]:
     cache.mkdir(parents=True, exist_ok=True)
     doc: dict[str, Any] = {
+        # The version of this document's shape. Raise it when a field changes meaning or goes away.
+        "schema": SCHEMA,
         "spantruth": __version__,
         "created": datetime.now(UTC).isoformat(timespec="seconds"),
         "mode": "latest" if latest else "pinned",

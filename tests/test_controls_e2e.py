@@ -22,6 +22,7 @@ def doc(tmp_path_factory):
 
 def test_the_run_is_complete(doc):
     assert runner.incomplete(doc) == []
+    assert doc["schema"] == 1
 
 
 def test_honest_control_passes_every_scenario(doc):
