@@ -4,6 +4,14 @@ Written 2026-11-03, for November 2026 to October 2027. This is the project-level
 are in [`.plans/`](.plans/), and the research behind this plan is in
 [`.context/CONTEXT_llm_telemetry_testing_landscape.md`](.context/CONTEXT_llm_telemetry_testing_landscape.md).
 
+## Progress
+
+- **2026-11-03.** E1 and the first half of E2 shipped: run without a clone (#19), current SDKs and
+  the `anthropic-sdk` subject (#21), directory subjects and local checkouts (#22), expectation
+  files and exit codes (#23), findings people can link to (#24), and the GitHub Action (#25). The
+  SDK bump found that the Anthropic SDK traces itself since 1.14.0, so any library on top reports
+  each call twice. Open from E0: the PyPI publisher and the three contributor pull requests.
+
 ## The goal
 
 spantruth is the default answer to one question: does this LLM telemetry report the numbers that the

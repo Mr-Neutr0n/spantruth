@@ -2,6 +2,19 @@
 
 Written 2026-11-03. Parent: [PLAN.md](../PLAN.md), epics E1 and the first half of E2.
 
+## Status
+
+Shipped on 2026-11-03: S1 in #19, S7 in #21, S2 and S3 in #22, S4 in #23, S6 in #24, S5 in #25.
+Two plan items changed on contact with the code:
+
+- **The stale-build risk for `--with ./checkout` did not exist.** A test that edits a checkout
+  between two runs passed with and without `--refresh-package`, because uv 0.12.19 rebuilds a local
+  directory on every install into a cleared environment. The flag was removed and the test stays as
+  the guard.
+- **The SDK bump moved both controls.** The Anthropic SDK creates its own spans since 1.14.0. The
+  fix is `ANTHROPIC_OPEN_TELEMETRY=false` in `subjects/_base.toml` and a new `anthropic-sdk`
+  subject, not a change to the controls.
+
 ## The problem
 
 A maintainer cannot test a library with spantruth unless they clone spantruth. To test a local

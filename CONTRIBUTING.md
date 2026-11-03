@@ -48,6 +48,10 @@ uv run ruff check . && uv run ruff format --check .
 
    Use the setup that the library's own documentation shows first. Return nothing, or a list of
    extra tracer providers to flush when the library makes its own.
+
+   Every subject gets the SDK versions in `subjects/_base.toml`. When a library declares that it
+   cannot run them, list the newest versions it accepts in its own `packages`, which replace the
+   base ones, and say why in `notes`. Never force a version the library excludes.
 3. Run it: `uv run spantruth run --subject <name>`. A subject directory outside `subjects/` runs
    the same way, by its path: `--subject ./path/to/subject`.
 4. Read every red cell before you open the pull request. A red cell is a claim about somebody's
@@ -63,6 +67,12 @@ uv run ruff check . && uv run ruff format --check .
    accepts your fixture.
 4. Run the controls. `control-honest` must pass the new scenario. If it does not, fix the
    reference instrumentation or the check, never the expected result.
+
+## Stable IDs
+
+A scenario ID, such as `anthropic/stream`, and a check ID, such as `output_tokens`, never change
+meaning. Maintainers keep expectation files in their own repositories that name them, so a change
+of meaning would silently change their CI. A new meaning gets a new ID.
 
 ## Pull requests
 
