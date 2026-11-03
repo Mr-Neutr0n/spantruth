@@ -36,6 +36,10 @@ All notable changes to this project are documented here. The format follows
   summary line, the command that reproduces it, and the spans the library exported. A matrix cell
   links to its finding.
 - A results document carries `"schema": 1`.
+- A GitHub Action, `Plexito-de/spantruth@<tag>`. One step runs a subject, writes the job summary,
+  uploads the results and the HTML report, and fails with the exit code of the run. It installs
+  spantruth from its own ref. CI runs it on both controls and checks that a run against an empty
+  expectation file fails with exit code 1.
 
 ### Changed
 

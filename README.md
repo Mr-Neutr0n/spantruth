@@ -154,6 +154,27 @@ A fix fails the comparison too, so the file always says what the library fails t
 fix with `--write-expect`. `--summary "$GITHUB_STEP_SUMMARY"` adds the report to a GitHub Actions
 job summary.
 
+### Run it in GitHub Actions
+
+```yaml
+jobs:
+  spantruth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: Plexito-de/spantruth@v0.3.0
+        with:
+          subject: ./spantruth                       # or a built-in subject, such as openllmetry
+          with: ./packages/my-instrumentation        # your checkout, one per line
+          expect: spantruth-expected.toml            # optional: fail only on a change
+```
+
+The step installs spantruth from its own ref, so a new release cannot change your results until
+you move the tag. It writes the matrix, the findings and the differences to the job summary,
+uploads the results and the HTML report as an artifact, and fails with the exit code of the run.
+The `exit-code` output tells a difference (1) from an incomplete run (3). It runs on Linux and
+macOS runners.
+
 ### Show the result
 
 The nightly run against the latest releases publishes a [shields.io](https://shields.io/badges/endpoint-badge)

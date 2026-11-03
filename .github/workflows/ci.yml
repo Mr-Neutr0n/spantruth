@@ -63,3 +63,42 @@ jobs:
         with:
           persist-credentials: false
       - uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+
+  action:
+    # The action as a user runs it. The last run compares with an empty expectation file, so it
+    # must fail with exit code 1: a gate that cannot fail has measured nothing.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: $/
+        with:
+          subject: control-honest
+          scenario: |
+            openai/basic
+            anthropic/stream-early-exit
+      - uses: $/
+        with:
+          subject: control-faulty
+          expect: subjects/control-faulty/expected.toml
+          scenario: |
+            openai/stream-no-usage
+            anthropic/cache-hit
+            anthropic/stream-early-exit
+      - run: touch "$RUNNER_TEMP/empty.toml"
+      - id: differs
+        uses: $/
+        continue-on-error: true
+        with:
+          subject: control-faulty
+          expect: ${{ runner.temp }}/empty.toml
+          scenario: openai/stream-no-usage
+          artifact-name: spantruth-control-faulty-differs
+      - name: The run against an empty expectation file failed with exit code 1
+        env:
+          OUTCOME: ${{ steps.differs.outcome }}
+          CODE: ${{ steps.differs.outputs.exit-code }}
+        run: test "$OUTCOME" = failure && test "$CODE" = 1
