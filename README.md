@@ -7,7 +7,7 @@ sent: tokens, cache tokens, models, finish reasons, errors, and whether the span
 [![CI](https://github.com/Plexito-de/spantruth/actions/workflows/ci.yml/badge.svg)](https://github.com/Plexito-de/spantruth/actions/workflows/ci.yml)
 [![Report](https://github.com/Plexito-de/spantruth/actions/workflows/report.yml/badge.svg)](https://plexito-de.github.io/spantruth/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
+![Python](https://img.shields.io/badge/python-3.11%20to%203.14-blue)
 
 **[Read the report](https://plexito-de.github.io/spantruth/)**: every library, every scenario,
 every finding with the rule it applies. It is rebuilt every night, at pinned versions and at the

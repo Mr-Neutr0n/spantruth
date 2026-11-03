@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- CI tests Python 3.13 and 3.14 as well as 3.11 and 3.12. Subject environments stay on 3.12.
+
 ## [0.3.0] - 2026-11-03
 
 ### Added
