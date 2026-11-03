@@ -67,6 +67,8 @@ runs:
         ARTIFACT_NAME: ${{ inputs.artifact-name }}
       run: |
         set -euo pipefail
+        # When installing spantruth fails, the run could not happen: report exit code 3.
+        trap 'echo "exit-code=3" >> "$GITHUB_OUTPUT"' ERR
         # One directory per step: a job can run the action more than once.
         out="$(mktemp -d "$RUNNER_TEMP/spantruth.XXXXXX")"
         uv venv --quiet --no-config --python 3.12 "$out/venv"

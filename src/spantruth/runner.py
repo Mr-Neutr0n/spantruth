@@ -93,6 +93,7 @@ def run_subject(
         "homepage": subject.homepage,
         "kind": subject.kind,
         "notes": subject.notes,
+        "ref": subject.ref,
         "cells": {},
     }
     try:

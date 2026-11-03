@@ -81,3 +81,29 @@ def test_the_action_compares_with_an_expectation_file(tmp_path):
     )
     assert code == 1
     assert "new failure" in summary and "openai/stream-no-usage" in summary
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(300)
+def test_a_failed_install_still_reports_exit_code_3(tmp_path):
+    script = tmp_path / "run.sh"
+    script.write_text(step("run")["run"])
+    output = tmp_path / "output"
+    output.touch()
+    env = {
+        "PATH": os.environ["PATH"],
+        "HOME": os.environ["HOME"],
+        "RUNNER_TEMP": str(tmp_path),
+        "GITHUB_ACTION_PATH": str(tmp_path / "no-such-checkout"),
+        "GITHUB_OUTPUT": str(output),
+        "GITHUB_STEP_SUMMARY": str(tmp_path / "summary.md"),
+        "SUBJECT": "control-honest",
+        "WITH": "",
+        "SCENARIO": "",
+        "EXPECT": "",
+        "LATEST": "",
+        "ARTIFACT_NAME": "",
+    }
+    proc = subprocess.run(["bash", str(script)], env=env, cwd=REPO, capture_output=True, text=True)
+    assert proc.returncode != 0
+    assert "exit-code=3" in output.read_text()

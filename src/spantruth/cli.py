@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import traceback
 from pathlib import Path
 
 from . import __version__, expectations, paths, report, runner, scenarios, subjects
@@ -57,6 +58,14 @@ def _run(args: argparse.Namespace) -> int:
         return _usage(exc.args[0])
     if (args.expect or args.write_expect) and len(selected) != 1:
         return _usage("--expect and --write-expect take exactly one --subject")
+    if (args.expect or args.write_expect) and not any(
+        scenarios.get(sid).provider in selected[0].providers for sid in ids
+    ):
+        # Without one cell, a comparison would pass on nothing.
+        return _usage(
+            f"no selected scenario applies to {selected[0].name}, which covers "
+            f"{', '.join(selected[0].providers)}"
+        )
     try:
         expected = expectations.load(Path(args.expect)) if args.expect else None
     except expectations.ExpectationError as exc:
@@ -78,25 +87,34 @@ def _run(args: argparse.Namespace) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
     text = report.markdown(doc)
+    gaps = runner.incomplete(doc)
     differences: list[expectations.Difference] = []
     if args.expect or args.write_expect:
         result = doc["subjects"][selected[0].name]
         found = expectations.failing(result)
-    if expected is not None:
+    if expected is not None and gaps:
+        text += "\n\nThe run is incomplete, so it was not compared with the expectation file."
+    elif expected is not None:
         differences = expectations.compare(expected, found, ran=set(result["cells"]))
-        text += "\n\n" + expectations.describe(differences)
+        skipped = sorted(set(expected) - set(result["cells"]))
+        text += "\n\n" + expectations.describe(differences, skipped)
     print(text)
     print(f"\nwrote {out}")
-    if args.write_expect:
+    if args.write_expect and gaps:
+        # A gap in the run is not a known failure of the library, so nothing is recorded.
+        print("spantruth: the run is incomplete, so --write-expect wrote nothing", file=sys.stderr)
+    elif args.write_expect:
         header = (
             f"Known failures of {selected[0].name}, written by spantruth {__version__}.\n"
             "A run with --expect fails when the failing checks differ from this file."
         )
-        Path(args.write_expect).write_text(expectations.dumps(found, header))
-        print(f"wrote {args.write_expect}")
+        written = Path(args.write_expect)
+        written.parent.mkdir(parents=True, exist_ok=True)
+        written.write_text(expectations.dumps(found, header))
+        print(f"wrote {written}")
     if args.summary:
         _append_summary(Path(args.summary), text)
-    for gap in runner.incomplete(doc):
+    for gap in gaps:
         print(f"spantruth: incomplete run: {gap}", file=sys.stderr)
     return exit_code(doc, differences)
 
@@ -184,7 +202,12 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except Exception as exc:  # unexpected means the harness failed, never a verdict (exit 3)
+        traceback.print_exc()
+        print(f"spantruth: could not finish: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 3
 
 
 if __name__ == "__main__":

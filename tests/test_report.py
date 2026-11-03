@@ -141,3 +141,44 @@ def test_a_markdown_value_cannot_break_the_table():
     check["got"], check["where"] = "a|b`c", "x|y"
     (row,) = [line for line in report.markdown(d).splitlines() if line.startswith("| lib |")]
     assert row.count("|") - row.count("\\|") == 10
+
+
+def test_a_script_address_is_never_a_link():
+    d = doc()
+    d["subjects"]["lib"]["homepage"] = "javascript:alert(1)"
+    d["subjects"]["lib"]["cells"]["anthropic/stream"]["checks"][0]["rule_url"] = "javascript:x()"
+    assert 'href="javascript' not in report.html(d)
+
+
+def test_a_markdown_detail_or_error_cannot_carry_markup():
+    d = doc()
+    check = d["subjects"]["lib"]["cells"]["anthropic/stream"]["checks"][0]
+    check["detail"] = "![pixel](https://example.com/p.png) ``two``"
+    d["subjects"]["lib"]["error"] = "Traceback ```\n<img src=x>"
+    md = report.markdown(d)
+    row = next(line for line in md.splitlines() if line.startswith("| lib |"))
+    assert "``` ![pixel](https://example.com/p.png) ``two`` ```" in row
+    assert "````\nTraceback ```\n<img src=x>\n````" in md
+
+
+def test_a_directory_subject_is_reproduced_by_its_path():
+    d = doc()
+    d["subjects"]["lib"]["ref"] = "./my subject"
+    (f,) = report.findings(d, [])
+    assert f["reproduce"] == "spantruth run --subject './my subject' --scenario anthropic/stream"
+
+
+def test_known_issues_only_annotate_built_in_subjects():
+    known = [
+        {
+            "subject": "lib",
+            "scenarios": ["anthropic/stream"],
+            "check": "output_tokens",
+            "status": "reported",
+            "url": "https://example.com/issues/1",
+            "note": "",
+        }
+    ]
+    d = doc()
+    d["subjects"]["lib"]["ref"] = "./lib"
+    assert report.findings(d, known)[0]["issue"] is None

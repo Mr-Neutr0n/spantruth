@@ -75,11 +75,25 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- An unexpected error in `spantruth run` exits 3, not 1, so it never reads as a regression in CI.
+- `--expect` and `--write-expect` refuse a selection with no scenario for the subject, instead of
+  passing on zero cells. On an incomplete run, the comparison is skipped and says so, and
+  `--write-expect` writes nothing.
+- A checkout with a broken `pyproject.toml` is a usage error (exit 2).
+- The action reports exit code 3 when it cannot install spantruth.
+- The reproduce command on the report names a directory subject by its path, quoted.
+- Known issues annotate only the built-in subjects, not a directory subject with the same name.
+
 - The fake provider now drops the connection when `drop_after` equals the number of events, where
   it used to end the stream cleanly.
 
 ### Security
 
+- The report links only http and https addresses, so a `javascript:` homepage or rule address is
+  text. A subject's homepage must be an http or https address.
+- Values from a library reach the Markdown report as code spans, and errors as fenced blocks, so
+  they cannot carry links or images into a GitHub job summary.
+- Only a built-in subject can be a control, so a directory subject cannot hide its findings.
 - The release workflow uses `pypa/gh-action-pypi-publish` v1.14.3, which fixes
   [GHSA-5xjx-3w67-w9x9](https://github.com/advisories/GHSA-5xjx-3w67-w9x9).
 

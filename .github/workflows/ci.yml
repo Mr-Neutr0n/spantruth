@@ -66,7 +66,9 @@ jobs:
 
   action:
     # The action as a user runs it. The last run compares with an empty expectation file, so it
-    # must fail with exit code 1: a gate that cannot fail has measured nothing.
+    # must fail with exit code 1: a gate that cannot fail has measured nothing. `uses: $/` is
+    # GitHub's self-repository syntax (July 2026): this repository at the workflow's own commit,
+    # independent of what a step left in the workspace. It is not a typo for `./`.
     runs-on: ubuntu-latest
     permissions:
       contents: read

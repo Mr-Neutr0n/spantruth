@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -49,8 +50,8 @@ def finding_id(subject: str, scenario: str, check: str) -> str:
 
 
 def reproduce(subject: str, scenario: str) -> str:
-    """The command that runs one cell again."""
-    return f"spantruth run --subject {subject} --scenario {scenario}"
+    """The command that runs one cell again. `subject` is a built-in name or a directory path."""
+    return f"spantruth run --subject {shlex.quote(subject)} --scenario {shlex.quote(scenario)}"
 
 
 def findings(doc: dict, known: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
@@ -59,6 +60,9 @@ def findings(doc: dict, known: list[dict[str, Any]] | None = None) -> list[dict[
     known = known_issues() if known is None else known
     out = []
     for name in _subjects(doc):
+        ref = doc["subjects"][name].get("ref") or name
+        # Known issues describe the built-in subjects. A directory subject only shares a name.
+        relevant = known if ref == name else []
         for sid, cell in doc["subjects"][name]["cells"].items():
             for c in cell["checks"]:
                 if c["verdict"] in ("pass", "n/a"):
@@ -66,7 +70,7 @@ def findings(doc: dict, known: list[dict[str, Any]] | None = None) -> list[dict[
                 issue = next(
                     (
                         k
-                        for k in known
+                        for k in relevant
                         if k["subject"] == name and sid in k["scenarios"] and k["check"] == c["id"]
                     ),
                     None,
@@ -78,7 +82,7 @@ def findings(doc: dict, known: list[dict[str, Any]] | None = None) -> list[dict[
                         **c,
                         "issue": issue,
                         "anchor": finding_id(name, sid, c["id"]),
-                        "reproduce": reproduce(name, sid),
+                        "reproduce": reproduce(ref, sid),
                     }
                 )
     return out
@@ -114,11 +118,23 @@ def _cell(text: Any) -> str:
     return str(text).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
 
 
+def _code(text: str) -> str:
+    """A Markdown code span that no backtick in `text` can close, so the text stays text."""
+    longest = max((len(run) for run in re.findall(r"`+", text)), default=0)
+    fence = "`" * (longest + 1)
+    pad = " " if longest else ""
+    return f"{fence}{pad}{text}{pad}{fence}"
+
+
+def _fence(text: str) -> str:
+    """A fenced block that no backtick run in `text` can close, for multi-line text."""
+    longest = max((len(run) for run in re.findall(r"`+", text)), default=0)
+    fence = "`" * max(3, longest + 1)
+    return f"{fence}\n{text}\n{fence}"
+
+
 def _fmt(value: Any) -> str:
-    if value is None:
-        return "—"
-    text = str(value)
-    return _cell(f"`` {text} ``" if "`" in text else f"`{text}`")
+    return "—" if value is None else _cell(_code(str(value)))
 
 
 def markdown(doc: dict) -> str:
@@ -149,11 +165,11 @@ def markdown(doc: dict) -> str:
             lines.append(
                 f"| {_cell(f['subject'])} | `{f['scenario']}` | {f['id']} | {f['verdict']} | "
                 f"{_fmt(f['expected'])} | {_fmt(f['got'])} | {_fmt(f['where'])} | "
-                f"{_cell(f['detail'][:160])} | "
+                f"{_cell(_code(f['detail'][:160])) if f['detail'] else ''} | "
                 f"{_link(f['issue'])} |"
             )
     errors = {n: s["error"] for n, s in doc["subjects"].items() if s.get("error")}
-    lines += [f"\n{n}: {e}" for n, e in errors.items()]
+    lines += [f"\n{_cell(n)}:\n\n{_fence(e)}" for n, e in errors.items()]
     return "\n".join(lines)
 
 

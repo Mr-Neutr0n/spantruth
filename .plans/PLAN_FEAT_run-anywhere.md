@@ -15,6 +15,28 @@ Two plan items changed on contact with the code:
   fix is `ANTHROPIC_OPEN_TELEMETRY=false` in `subjects/_base.toml` and a new `anthropic-sdk`
   subject, not a change to the controls.
 
+## Code review, 2026-11-03
+
+A separate instance reviewed the shipped code. Fixed in the next pull request: an unexpected
+exception exited 1, which reads as a regression (now 3); a run whose subject had no applicable
+scenario passed `--expect` on zero cells (now a usage error); an incomplete run still printed
+"match", and `--write-expect` recorded its gaps as known failures; a failed install left the
+action's `exit-code` output empty; a `javascript:` homepage became a link on the report; a value
+from a library could carry Markdown or HTML into a job summary; a directory subject could call
+itself a control and hide its findings; and the reproduce command named a directory subject by its
+built-in-looking name. The review's one high finding was wrong: `uses: $/` is GitHub's
+self-repository syntax, and the `action` job ran green with it. A comment now says so.
+
+Deferred, with a reason:
+
+- **Two processes sharing one cache.** The default cache is now per user, so two runs with
+  `--latest` or `--with` on one machine can rebuild the same environment at the same moment. Hosted
+  CI runners are separate machines, so only a self-hosted runner with parallel jobs meets it. Fix
+  it when somebody does: build into a temporary directory and rename it into place.
+- **A flaky cell in an expectation file.** The format names one verdict per check, so a cell that
+  is sometimes `inconclusive` cannot be gated. Add a list of allowed verdicts when a maintainer
+  asks for it.
+
 ## The problem
 
 A maintainer cannot test a library with spantruth unless they clone spantruth. To test a local

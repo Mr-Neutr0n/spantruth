@@ -158,3 +158,57 @@ def test_the_exit_code_follows_the_expectation_file(tmp_path):
     assert expectations.load(written) == {"openai/stream-no-usage": {"output_tokens": "wrong"}}
     assert cli.main([*base, "--expect", str(empty), "--summary", str(summary)]) == 1
     assert "new failure" in summary.read_text() and "openai/stream-no-usage" in summary.read_text()
+
+
+def test_expect_needs_a_scenario_that_applies_to_the_subject(tmp_path, capsys):
+    path = tmp_path / "expected.toml"
+    path.write_text("")
+    args = ["run", "--subject", "anthropic-sdk", "--scenario", "openai/basic"]
+    assert cli.main([*args, "--expect", str(path)]) == 2
+    assert "no selected scenario applies to anthropic-sdk" in capsys.readouterr().err
+
+
+def test_describe_is_a_markdown_list_and_names_what_did_not_run():
+    text = expectations.describe(
+        [expectations.Difference("openai/basic", "output_tokens", None, "wrong")],
+        skipped=["anthropic/stream"],
+    )
+    assert "\n- new failure: `openai/basic` `output_tokens`: wrong" in text
+    assert "anthropic/stream" in text and "not compared" in text
+
+
+def test_an_unexpected_error_is_exit_code_3(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise FileNotFoundError("uv")
+
+    monkeypatch.setattr(runner, "run", boom)
+    assert cli.main(["run", "--subject", "control-honest", "--scenario", "openai/basic"]) == 3
+    assert "FileNotFoundError" in capsys.readouterr().err
+
+
+def _incomplete_doc(*args, **kwargs):
+    return {
+        "spantruth": "x",
+        "mode": "pinned",
+        "created": "now",
+        "scenarios": {},
+        "subjects": {
+            "control-faulty": {
+                "title": "t",
+                "homepage": "https://example.com",
+                "kind": "control",
+                "error": "environment build failed",
+                "cells": {},
+            }
+        },
+    }
+
+
+def test_an_incomplete_run_is_not_compared_and_writes_no_expectations(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "run", _incomplete_doc)
+    written, summary = tmp_path / "w.toml", tmp_path / "summary.md"
+    args = ["run", "--subject", "control-faulty", "--out", str(tmp_path / "r.json")]
+    args += ["--expect", str(FAULTY), "--write-expect", str(written), "--summary", str(summary)]
+    assert cli.main(args) == 3
+    assert not written.exists()
+    assert "not compared" in summary.read_text()
