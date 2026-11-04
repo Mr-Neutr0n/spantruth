@@ -71,17 +71,35 @@ def test_latest_also_unpins_the_sdks():
     assert any(r.startswith("opentelemetry-sdk==") for r in reqs)
 
 
+def test_openlit_is_pinned_and_tracked():
+    lib = subjects.load("openlit")
+    assert lib.title == "OpenLIT"
+    assert lib.providers == ("openai", "anthropic")
+    assert lib.homepage == "https://github.com/openlit/openlit"
+    assert "openlit==1.45.0" in subjects.requirements(lib, latest=False)
+    assert "openai==2.54.0" in subjects.requirements(lib, latest=False)
+    assert "anthropic==0.125.0" in subjects.requirements(lib, latest=False)
+    latest = subjects.requirements(lib, latest=True)
+    assert "openlit" in latest
+    assert "openlit==1.45.0" not in latest
+
+
 def test_an_override_for_a_package_nobody_installs_is_refused(capsys):
     code = cli.main(["run", "--subject", "control-honest", "--with", PR_HEAD, "--out", "/dev/null"])
     assert code == 2
     assert "no selected subject installs" in capsys.readouterr().err
 
 
-def _copy_subject(tmp_path, name="my-lib", source="control-honest"):
+def _copy_subject(tmp_path, name="my-lib", source="control-honest", keep_kind=False):
+    """A copy of a built-in subject in another directory, as a maintainer would keep it."""
     import shutil
 
     target = tmp_path / name
     shutil.copytree(subjects.SUBJECTS / source, target)
+    config = target / "subject.toml"
+    if not keep_kind:  # outside subjects/, a copy of a control is an ordinary subject
+        lines = config.read_text().splitlines()
+        config.write_text("\n".join(line for line in lines if not line.startswith("kind")) + "\n")
     return target
 
 
@@ -206,3 +224,31 @@ def test_a_directory_subject_runs_end_to_end(tmp_path):
     lib = subjects.load(str(_copy_subject(tmp_path, name="maintainers-own")))
     doc = runner.run([lib], ["openai/basic"], tmp_path / "venvs")
     assert doc["subjects"]["maintainers-own"]["cells"]["openai/basic"]["verdict"] == "pass"
+
+
+def test_a_homepage_must_be_a_web_address(tmp_path):
+    directory = _copy_subject(tmp_path)
+    (directory / "subject.toml").write_text(
+        'title = "t"\nhomepage = "javascript:alert(1)"\nproviders = ["openai"]\n'
+    )
+    with pytest.raises(subjects.SubjectError, match="http or https"):
+        subjects.load(str(directory))
+
+
+def test_only_a_built_in_subject_can_be_a_control(tmp_path):
+    directory = _copy_subject(tmp_path, keep_kind=True)
+    with pytest.raises(subjects.SubjectError, match="reserved for the built-in controls"):
+        subjects.load(str(directory))
+    assert subjects.load("control-honest").kind == "control"
+
+
+def test_a_checkout_with_a_broken_pyproject_is_a_usage_error(tmp_path):
+    directory = _checkout(tmp_path, "[project\nname = ")
+    with pytest.raises(subjects.SubjectError, match=r"pyproject\.toml"):
+        subjects.resolve_override(str(directory))
+
+
+def test_a_directory_subject_remembers_how_it_was_named(tmp_path):
+    directory = _copy_subject(tmp_path, source="openllmetry")
+    assert subjects.load(str(directory)).ref == str(directory)
+    assert subjects.load("openllmetry").ref == "openllmetry"

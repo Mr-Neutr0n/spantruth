@@ -7,7 +7,7 @@ sent: tokens, cache tokens, models, finish reasons, errors, and whether the span
 [![CI](https://github.com/Plexito-de/spantruth/actions/workflows/ci.yml/badge.svg)](https://github.com/Plexito-de/spantruth/actions/workflows/ci.yml)
 [![Report](https://github.com/Plexito-de/spantruth/actions/workflows/report.yml/badge.svg)](https://plexito-de.github.io/spantruth/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
+![Python](https://img.shields.io/badge/python-3.11%20to%203.14-blue)
 
 **[Read the report](https://plexito-de.github.io/spantruth/)**: every library, every scenario,
 every finding with the rule it applies. It is rebuilt every night, at pinned versions and at the
@@ -97,11 +97,10 @@ library.
 You need [uv](https://docs.astral.sh/uv/). No clone, no API keys:
 
 ```sh
-alias spantruth='uvx --from git+https://github.com/Plexito-de/spantruth spantruth'
-spantruth list                                          # scenarios and subjects
-spantruth run --subject openllmetry                     # one library, every scenario
-spantruth run --out results.json                        # everything, about 3 minutes
-spantruth report results.json --html report.html
+uvx spantruth list                                      # scenarios and subjects
+uvx spantruth run --subject openllmetry                 # one library, every scenario
+uvx spantruth run --out results.json                    # everything, about 3 minutes
+uvx spantruth report results.json --html report.html
 ```
 
 Each subject gets its own virtual environment under `~/.cache/spantruth/venvs`
@@ -120,8 +119,8 @@ branch, or a version. A checkout is named by its `pyproject.toml`, and the resul
 each value resolved to.
 
 ```sh
-spantruth run --subject openllmetry --with ./packages/opentelemetry-instrumentation-anthropic
-spantruth run --subject openllmetry --with \
+uvx spantruth run --subject openllmetry --with ./packages/opentelemetry-instrumentation-anthropic
+uvx spantruth run --subject openllmetry --with \
   "opentelemetry-instrumentation-anthropic @ git+https://github.com/traceloop/openllmetry@refs/pull/4377/head#subdirectory=packages/opentelemetry-instrumentation-anthropic"
 ```
 
@@ -130,7 +129,7 @@ A subject can live in your own repository. Copy the two files of a subject in
 path. A value with a slash is a path, and a value without one is a built-in subject:
 
 ```sh
-spantruth run --subject ./spantruth
+uvx spantruth run --subject ./spantruth
 ```
 
 ### Fail CI on a regression, not on a known bug
@@ -139,8 +138,8 @@ Record the checks that your library fails today, commit the file, and compare ev
 with it:
 
 ```sh
-spantruth run --subject ./spantruth --write-expect spantruth-expected.toml
-spantruth run --subject ./spantruth --expect spantruth-expected.toml
+uvx spantruth run --subject ./spantruth --write-expect spantruth-expected.toml
+uvx spantruth run --subject ./spantruth --expect spantruth-expected.toml
 ```
 
 | Exit code | Meaning |
@@ -197,11 +196,14 @@ endpoint per library, at `https://plexito-de.github.io/spantruth/badges/<subject
 - **Subjects:** the [OpenTelemetry GenAI instrumentation](https://github.com/open-telemetry/opentelemetry-python-genai),
   [OpenLLMetry](https://github.com/traceloop/openllmetry),
   [OpenInference](https://github.com/Arize-ai/openinference),
+  [OpenLIT](https://github.com/openlit/openlit),
   [Pydantic Logfire](https://github.com/pydantic/logfire), and the built-in tracing of the
   [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-python), plus the two controls.
 
-Next: OpenLIT, the JavaScript libraries, AWS Bedrock, Gemini and the rest of the OpenAI
-Responses API. [Help is welcome](CONTRIBUTING.md#ways-to-help).
+Next, from the [plan](PLAN.md): the bug classes that repeat (tool calls and
+reasoning tokens in a stream, the SDK helpers such as `messages.stream()`, the rest of the OpenAI
+Responses API), Google Gemini, frameworks such as LiteLLM and Pydantic AI, and the JavaScript
+libraries. [Help is welcome](CONTRIBUTING.md#ways-to-help).
 
 ## Related work
 

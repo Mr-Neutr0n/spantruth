@@ -54,6 +54,16 @@ details code{overflow-wrap:anywhere}
 """
 
 
+def _url(value: Any) -> str | None:
+    """A web address that is safe in an href. Anything else, such as javascript:, is not a link."""
+    return value if isinstance(value, str) and value.startswith(("https://", "http://")) else None
+
+
+def _link(text: str, url: Any) -> str:
+    safe = _url(url)
+    return f'<a href="{escape(safe)}">{text}</a>' if safe else text
+
+
 def _badge(verdict: str) -> str:
     if verdict == "n/a":
         return '<span class="na" title="not graded">·</span>'
@@ -63,8 +73,7 @@ def _badge(verdict: str) -> str:
 def _matrix(doc: dict, names: list[str], first: dict[tuple[str, str], str]) -> str:
     """The scenario x subject table. A cell with a finding links to its first finding."""
     head = "".join(
-        f'<th scope="col"><a href="{escape(doc["subjects"][n]["homepage"])}">{escape(n)}</a></th>'
-        for n in names
+        f'<th scope="col">{_link(escape(n), doc["subjects"][n]["homepage"])}</th>' for n in names
     )
     rows = []
     for sid, sc in doc["scenarios"].items():
@@ -132,9 +141,7 @@ def _gist(f: dict[str, Any]) -> str:
 
 
 def _finding(f: dict[str, Any], spans: list[dict[str, Any]]) -> str:
-    rule = escape(f.get("rule", ""))
-    if f.get("rule_url"):
-        rule = f'<a href="{escape(f["rule_url"])}">{rule}</a>'
+    rule = _link(escape(f.get("rule", "")), f.get("rule_url"))
     fields = [
         ("Expected", f.get("expected")),
         ("Reported", f.get("got")),
@@ -147,10 +154,7 @@ def _finding(f: dict[str, Any], spans: list[dict[str, Any]]) -> str:
     issue = f.get("issue")
     if issue:
         note = f" {escape(issue['note'])}" if issue.get("note") else ""
-        rows += (
-            f'<dt>Upstream</dt><dd><a href="{escape(issue["url"])}">'
-            f"{escape(issue['status'])}</a>{note}</dd>"
-        )
+        rows += f"<dt>Upstream</dt><dd>{_link(escape(issue['status']), issue['url'])}{note}</dd>"
     rows += f"<dt>Reproduce</dt><dd><code>{escape(f['reproduce'])}</code></dd>"
     anchor = escape(f["anchor"])
     return (

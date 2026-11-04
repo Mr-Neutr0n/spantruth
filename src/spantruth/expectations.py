@@ -93,17 +93,24 @@ def compare(expected: Failing, got: Failing, ran: set[str]) -> list[Difference]:
     return out
 
 
-def describe(differences: list[Difference]) -> str:
-    """The differences as text a CI log or a job summary can show."""
+def describe(differences: list[Difference], skipped: list[str] | tuple[str, ...] = ()) -> str:
+    """The differences as a Markdown list, which reads the same in a CI log and a job summary.
+
+    `skipped` are the scenarios the file names that did not run, so they were not compared.
+    """
     if not differences:
-        return "The failing checks match the expectation file."
-    lines = [f"{len(differences)} difference(s) from the expectation file:"]
-    for d in differences:
-        if d.expected is None:
-            lines.append(f"  new failure  {d.scenario}  {d.check}: {d.got}")
-        elif d.got is None:
-            lines.append(f"  now passes   {d.scenario}  {d.check}: was {d.expected}")
-        else:
-            lines.append(f"  changed      {d.scenario}  {d.check}: was {d.expected}, now {d.got}")
-    lines.append("If the change is intended, record the new state with --write-expect FILE.")
+        lines = ["The failing checks match the expectation file."]
+    else:
+        lines = [f"{len(differences)} difference(s) from the expectation file:", ""]
+        for d in differences:
+            cell = f"`{d.scenario}` `{d.check}`"
+            if d.expected is None:
+                lines.append(f"- new failure: {cell}: {d.got}")
+            elif d.got is None:
+                lines.append(f"- now passes: {cell}: was {d.expected}")
+            else:
+                lines.append(f"- changed: {cell}: was {d.expected}, now {d.got}")
+        lines += ["", "If the change is intended, record the new state with `--write-expect FILE`."]
+    if skipped:
+        lines += ["", f"In the file but not run, so not compared: {', '.join(skipped)}."]
     return "\n".join(lines)

@@ -41,6 +41,8 @@ class Subject:
     kind: str = "library"
     env: dict[str, str] = field(default_factory=dict)
     notes: str = ""
+    # How the subject was named: a built-in name, or the path that was given.
+    ref: str = ""
 
 
 def base() -> dict:
@@ -74,6 +76,11 @@ def load(ref: str) -> Subject:
         )
     if not (directory / "instrument.py").is_file():
         raise SubjectError(f"{directory}: no instrument.py")
+    if not str(data["homepage"]).startswith(("https://", "http://")):
+        raise SubjectError(f"{config}: homepage must be an http or https address")
+    kind = data.get("kind", "library")
+    if kind == "control" and directory.parent != SUBJECTS:
+        raise SubjectError(f'{config}: kind = "control" is reserved for the built-in controls')
     return Subject(
         name=directory.name,
         directory=directory,
@@ -82,9 +89,10 @@ def load(ref: str) -> Subject:
         providers=tuple(data["providers"]),
         packages=tuple(data.get("packages", ())),
         track=tuple(data.get("track", ())),
-        kind=data.get("kind", "library"),
+        kind=kind,
         env=dict(data.get("env", {})),
         notes=data.get("notes", ""),
+        ref=ref if is_path(ref) else directory.name,
     )
 
 
@@ -102,7 +110,10 @@ def resolve_override(spec: str) -> str:
     if not (("/" in spec or spec.startswith(".")) and path.is_dir()):
         return spec
     pyproject = path / "pyproject.toml"
-    meta = tomllib.loads(pyproject.read_text()) if pyproject.is_file() else {}
+    try:
+        meta = tomllib.loads(pyproject.read_text()) if pyproject.is_file() else {}
+    except tomllib.TOMLDecodeError as exc:
+        raise SubjectError(f"--with {spec}: {pyproject}: {exc}") from None
     name = meta.get("project", {}).get("name") or meta.get("tool", {}).get("poetry", {}).get("name")
     if not name:
         raise SubjectError(

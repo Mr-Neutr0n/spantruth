@@ -8,8 +8,19 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- OpenLIT is a subject (`openlit==1.45.0`), instrumenting the OpenAI and Anthropic SDKs.
 - Pydantic Logfire is a subject (`logfire==5.4.0`), instrumenting the OpenAI and Anthropic SDKs
   with no Logfire account.
+
+### Changed
+
+- spantruth is on PyPI, so the README quick start is `uvx spantruth`.
+- CI tests Python 3.13 and 3.14 as well as 3.11 and 3.12. Subject environments stay on 3.12.
+
+## [0.3.0] - 2026-11-03
+
+### Added
+
 - A recorded response can be replayed as a scenario, from a fixture in kartsan03/wiretruth's
   `wiretruth.fixture/v1` format. The first is `openai/responses-stream-missing-finish-abort`, the
   first OpenAI Responses API scenario: eight recorded events, then the connection drops.
@@ -77,11 +88,25 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- An unexpected error in `spantruth run` exits 3, not 1, so it never reads as a regression in CI.
+- `--expect` and `--write-expect` refuse a selection with no scenario for the subject, instead of
+  passing on zero cells. On an incomplete run, the comparison is skipped and says so, and
+  `--write-expect` writes nothing.
+- A checkout with a broken `pyproject.toml` is a usage error (exit 2).
+- The action reports exit code 3 when it cannot install spantruth.
+- The reproduce command on the report names a directory subject by its path, quoted.
+- Known issues annotate only the built-in subjects, not a directory subject with the same name.
+
 - The fake provider now drops the connection when `drop_after` equals the number of events, where
   it used to end the stream cleanly.
 
 ### Security
 
+- The report links only http and https addresses, so a `javascript:` homepage or rule address is
+  text. A subject's homepage must be an http or https address.
+- Values from a library reach the Markdown report as code spans, and errors as fenced blocks, so
+  they cannot carry links or images into a GitHub job summary.
+- Only a built-in subject can be a control, so a directory subject cannot hide its findings.
 - The release workflow uses `pypa/gh-action-pypi-publish` v1.14.3, which fixes
   [GHSA-5xjx-3w67-w9x9](https://github.com/advisories/GHSA-5xjx-3w67-w9x9).
 
@@ -119,6 +144,7 @@ All notable changes to this project are documented here. The format follows
 - Subjects: the OpenTelemetry GenAI instrumentation, OpenLLMetry and OpenInference.
 - A Markdown and a static HTML report.
 
-[Unreleased]: https://github.com/Plexito-de/spantruth/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Plexito-de/spantruth/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Plexito-de/spantruth/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Plexito-de/spantruth/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Plexito-de/spantruth/releases/tag/v0.1.0

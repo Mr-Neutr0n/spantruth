@@ -8,7 +8,7 @@ that somebody adds, and with every maintainer who tells us where a check is unfa
 These are the contributions the project needs most. Each one has an issue with the
 [`help wanted`](https://github.com/Plexito-de/spantruth/labels/help%20wanted) label.
 
-- **Add a subject.** OpenLIT, MLflow, LiteLLM, and the JavaScript libraries
+- **Add a subject.** Logfire, OpenLIT, MLflow, LiteLLM, and the JavaScript libraries
   (OpenLLMetry JS, OpenInference JS, the Vercel AI SDK) are not covered yet.
 - **Add a provider.** AWS Bedrock, Google Gemini and the OpenAI Responses API come next.
 - **Add a scenario.** Retries, Anthropic thinking tokens, and tool calls in a stream.
@@ -48,6 +48,10 @@ uv run ruff check . && uv run ruff format --check .
 
    Use the setup that the library's own documentation shows first. Return nothing, or a list of
    extra tracer providers to flush when the library makes its own.
+
+   Every subject gets the SDK versions in `subjects/_base.toml`. When a library declares that it
+   cannot run them, list the newest versions it accepts in its own `packages`, which replace the
+   base ones, and say why in `notes`. Never force a version the library excludes.
 3. Run it: `uv run spantruth run --subject <name>`. A subject directory outside `subjects/` runs
    the same way, by its path: `--subject ./path/to/subject`.
 4. Read every red cell before you open the pull request. A red cell is a claim about somebody's
@@ -63,6 +67,27 @@ uv run ruff check . && uv run ruff format --check .
    accepts your fixture.
 4. Run the controls. `control-honest` must pass the new scenario. If it does not, fix the
    reference instrumentation or the check, never the expected result.
+
+## Stable IDs
+
+A scenario ID, such as `anthropic/stream`, and a check ID, such as `output_tokens`, never change
+meaning. Maintainers keep expectation files in their own repositories that name them, so a change
+of meaning would silently change their CI. A new meaning gets a new ID.
+
+## How we review
+
+A contributor should never have to guess when they are done. So a maintainer's review follows these
+rules:
+
+1. **The first review is complete.** It names every change that blocks the merge, in one comment.
+   Anything not in it does not block.
+2. **Later rounds check only those changes**, plus anything the new code itself breaks. A new idea
+   after the first review is not a new condition. The maintainer opens an issue for it or does it
+   after the merge. The one exception is a real problem the first review overlooked, such as a wrong
+   verdict or a broken control. It may block, and the review says plainly that it should have been
+   raised in the first round.
+3. **A conflict that `main` caused is the maintainer's to resolve**, not the contributor's.
+4. **Optional suggestions are marked as optional**, and they never hold a merge.
 
 ## Pull requests
 
