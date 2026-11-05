@@ -8,10 +8,10 @@ that somebody adds, and with every maintainer who tells us where a check is unfa
 These are the contributions the project needs most. Each one has an issue with the
 [`help wanted`](https://github.com/Plexito-de/spantruth/labels/help%20wanted) label.
 
-- **Add a subject.** Logfire, OpenLIT, MLflow, LiteLLM, and the JavaScript libraries
+- **Add a subject.** MLflow, LiteLLM, and the JavaScript libraries
   (OpenLLMetry JS, OpenInference JS, the Vercel AI SDK) are not covered yet.
 - **Add a provider.** AWS Bedrock, Google Gemini and the OpenAI Responses API come next.
-- **Add a scenario.** Retries, Anthropic thinking tokens, and tool calls in a stream.
+- **Add a scenario.** Anthropic thinking tokens, and tool calls in a stream.
 - **Maintain an instrumentation library?** Review the adapter for your library in
   `subjects/<name>/instrument.py`. If it does not use your documented setup, the results are not
   fair, and we want to know.

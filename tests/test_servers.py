@@ -25,11 +25,11 @@ def mock():
 def _consume(sc, mock):
     """Run the scenario through the real SDK. Return (events or response, exception)."""
     if sc.api == "responses":
-        client = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=0)
+        client = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=sc.retries)
         kw = {"model": sc.request_model, "input": "hi", "stream": sc.stream}
         call = client.responses.create
     elif sc.provider == "openai":
-        client = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=0)
+        client = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=sc.retries)
         kw = {"model": sc.request_model, "messages": [{"role": "user", "content": "hi"}]}
         if sc.stream:
             kw["stream"] = True
@@ -37,7 +37,9 @@ def _consume(sc, mock):
             kw["stream_options"] = {"include_usage": True}
         call = client.chat.completions.create
     else:
-        client = anthropic.Anthropic(base_url=mock.base_url(sc), api_key="test", max_retries=0)
+        client = anthropic.Anthropic(
+            base_url=mock.base_url(sc), api_key="test", max_retries=sc.retries
+        )
         kw = {
             "model": sc.request_model,
             "max_tokens": 64,
@@ -113,3 +115,32 @@ def test_receiver_drops_other_paths():
         )
         assert urllib.request.urlopen(req).status == 200
         assert rx.spans == [] and rx.errors == []
+
+
+def test_mock_server_retries_429_per_scenario(mock):
+    sc = scenarios.get("openai/retry-429")
+    mock.reset()
+
+    # With retries enabled, SDK retries 429 and succeeds on the second attempt
+    client = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=2)
+    resp = client.chat.completions.create(
+        model=sc.request_model, messages=[{"role": "user", "content": "hi"}]
+    )
+    assert resp.id == "chatcmpl-wt-retry"
+    assert len([r for r in mock.requests if r[0] == sc.id]) == 2
+
+    # With retries disabled, the 429 raises RateLimitError
+    client_no_retry = openai.OpenAI(base_url=mock.base_url(sc), api_key="test", max_retries=0)
+    with pytest.raises(openai.RateLimitError):
+        client_no_retry.chat.completions.create(
+            model=sc.request_model, messages=[{"role": "user", "content": "hi"}]
+        )
+
+
+def test_mock_server_retries_without_retry_header(mock):
+    sc = scenarios.get("openai/retry-429")
+    mock.reset()
+    r1 = mock.next_response(sc)
+    r2 = mock.next_response(sc)
+    assert r1.status == 429
+    assert r2.status == 200

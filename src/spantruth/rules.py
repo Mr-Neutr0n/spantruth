@@ -40,6 +40,11 @@ RULES: dict[str, tuple[str, str]] = {
         "sets the status to Error.",
         RECORDING_ERRORS,
     ),
+    "status.unset": (
+        "Span Status Code MUST be left unset if the instrumented operation has ended without "
+        "any errors.",
+        f"{RECORDING_ERRORS}#L44-L45",
+    ),
     "error.type": (
         "`error.type` is conditionally required if the operation ended in an error. Any "
         "low-cardinality identifier is allowed, so only its presence is graded.",

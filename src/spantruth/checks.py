@@ -184,6 +184,16 @@ def grade(
         else:
             checks.append(Check("error.type", "missing"))
         return checks
+    if errored := [s for s in llm if s.status == "ERROR"]:
+        checks.append(
+            Check(
+                "status.unset",
+                "wrong",
+                "UNSET",
+                "ERROR",
+                detail=f"{len(errored)} span(s) set status to Error on a successful operation",
+            )
+        )
     for fact in VALUES:
         if not any(defined_for(s.attributes, fact) for s in llm):
             checks.append(

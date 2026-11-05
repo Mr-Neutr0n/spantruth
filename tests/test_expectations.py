@@ -94,7 +94,13 @@ def test_describe_says_how_to_record_an_intended_change():
 
 def test_every_check_the_grader_can_emit_is_known():
     emitted = {"app.unchanged", "span.ended", "span.recorded", "span.parented", "error.status"}
-    emitted |= {"error.type", "tokens.single-report", "harness", "subject.instrument"}
+    emitted |= {
+        "error.type",
+        "status.unset",
+        "tokens.single-report",
+        "harness",
+        "subject.instrument",
+    }
     assert emitted | set(checks.VALUES) <= expectations.CHECK_IDS
 
 

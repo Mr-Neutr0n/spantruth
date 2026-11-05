@@ -122,6 +122,15 @@ def test_error_recorded_as_success_is_wrong():
     assert c["error.status"].verdict == "wrong" and c["error.type"].verdict == "missing"
 
 
+def test_error_status_on_successful_operation_is_wrong():
+    sc = scenarios.get("openai/retry-429")
+    t, attrs = honest(sc.id)
+    c = by_id(grade(sc, t, BASE, obs(), [span(attrs, status="ERROR")]))
+    assert c["status.unset"].verdict == "wrong"
+    assert c["status.unset"].expected == "UNSET"
+    assert c["status.unset"].got == "ERROR"
+
+
 def test_any_error_type_passes():
     sc = scenarios.get("anthropic/rate-limited")
     attrs = {"gen_ai.request.model": "m", "error.type": "RateLimitError"}

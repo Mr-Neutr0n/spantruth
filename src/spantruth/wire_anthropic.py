@@ -107,9 +107,11 @@ def events(
     return Response(events=tuple(stream), drop_after=drop_after)
 
 
-def error(status: int, kind: str, message: str) -> Response:
+def error(status: int, kind: str, message: str, headers: dict[str, str] | None = None) -> Response:
     return Response(
-        status=status, body={"type": "error", "error": {"type": kind, "message": message}}
+        status=status,
+        headers=headers or {},
+        body={"type": "error", "error": {"type": kind, "message": message}},
     )
 
 

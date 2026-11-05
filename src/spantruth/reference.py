@@ -9,6 +9,7 @@ Faults:
     close-leaks-span      `stream.close()` does not end the span
     errors-as-success     exceptions are not recorded on the span
     estimate-tokens       a stream without usage gets an estimate from the text length
+    retry-as-error        a retried operation that succeeds still sets Error status
 """
 
 from __future__ import annotations
@@ -37,9 +38,12 @@ class _Call:
         self.text = ""
         self.usage_seen = False
         self.ended = False
+        self.response_id = ""
 
     def set(self, key: str, value: Any) -> None:
         if value is not None:
+            if key == "gen_ai.response.id":
+                self.response_id = str(value)
             self.span.set_attribute(key, value)
 
     def usage(
@@ -68,6 +72,10 @@ class _Call:
             self.set("gen_ai.response.finish_reasons", self.finish)
         if not self.usage_seen and self.text and "estimate-tokens" in self.faults:
             self.set("gen_ai.usage.output_tokens", max(1, len(self.text) // 4))
+        if "retry-as-error" in self.faults and (
+            self.response_id.endswith("-retry") or self.response_id.endswith("_retry")
+        ):
+            self.span.set_status(Status(StatusCode.ERROR, "429 Too Many Requests"))
         self.span.end()
 
 

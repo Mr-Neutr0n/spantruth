@@ -114,9 +114,10 @@ def chunks(
     return Response(events=tuple(events), drop_after=drop_after)
 
 
-def error(status: int, code: str, message: str) -> Response:
+def error(status: int, code: str, message: str, headers: dict[str, str] | None = None) -> Response:
     return Response(
         status=status,
+        headers=headers or {},
         body={"error": {"message": message, "type": "requests", "param": None, "code": code}},
     )
 

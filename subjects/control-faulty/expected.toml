@@ -6,6 +6,7 @@
 "anthropic/async-stream-error-event" = { "error.status" = "wrong", "error.type" = "missing" }
 "anthropic/cache-hit" = { "input_tokens" = "wrong" }
 "anthropic/rate-limited" = { "error.status" = "wrong", "error.type" = "missing" }
+"anthropic/retry-429" = { "status.unset" = "wrong" }
 "anthropic/stream-cache-cumulative" = { "input_tokens" = "wrong" }
 "anthropic/stream-cache-hit" = { "input_tokens" = "wrong" }
 "anthropic/stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
@@ -16,6 +17,7 @@
 "openai/async-stream-early-exit" = { "span.ended" = "lost" }
 "openai/rate-limited" = { "error.status" = "wrong", "error.type" = "missing" }
 "openai/responses-stream-missing-finish-abort" = { "error.status" = "wrong", "error.type" = "missing" }
+"openai/retry-429" = { "status.unset" = "wrong" }
 "openai/stream-dropped" = { "error.status" = "wrong", "error.type" = "missing" }
 "openai/stream-early-exit" = { "span.ended" = "lost" }
 "openai/stream-early-exit-with" = { "span.ended" = "lost" }
