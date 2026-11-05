@@ -117,6 +117,22 @@ def _openai() -> list[Scenario]:
             oa.error(429, "rate_limit_exceeded", "Rate limit reached for gpt-5-mini."),
         ),
         sc(
+            "retry-429",
+            "HTTP 429 with retry-after, then a success",
+            "an error status or duplicate span on a retried call",
+            oa.completion(id="chatcmpl-wt-retry", prompt=2477, completion_tokens=367, **body),
+            responses=(
+                oa.error(
+                    429,
+                    "rate_limit_exceeded",
+                    "Rate limit reached for gpt-5-mini.",
+                    headers={"retry-after": "0.1"},
+                ),
+                oa.completion(id="chatcmpl-wt-retry", prompt=2477, completion_tokens=367, **body),
+            ),
+            retries=2,
+        ),
+        sc(
             "stream-dropped",
             "Connection drops mid-stream",
             "an error swallowed into a cut-off answer",
@@ -265,6 +281,22 @@ def _anthropic() -> list[Scenario]:
             "HTTP 429",
             "a failed call recorded as a success",
             an.error(429, "rate_limit_error", "Number of request tokens has exceeded your limit."),
+        ),
+        sc(
+            "retry-429",
+            "HTTP 429 with retry-after, then a success",
+            "an error status or duplicate span on a retried call",
+            an.message(id="msg_wt_retry", input_tokens=2477, output_tokens=367, **body),
+            responses=(
+                an.error(
+                    429,
+                    "rate_limit_error",
+                    "Number of request tokens has exceeded your limit.",
+                    headers={"retry-after": "0.1"},
+                ),
+                an.message(id="msg_wt_retry", input_tokens=2477, output_tokens=367, **body),
+            ),
+            retries=2,
         ),
         sc(
             "stream-dropped",

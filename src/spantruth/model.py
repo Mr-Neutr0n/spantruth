@@ -22,6 +22,7 @@ class Response:
     """
 
     status: int = 200
+    headers: dict[str, str] = field(default_factory=dict)
     body: dict | None = None
     events: tuple[Event, ...] | None = None
     drop_after: int | None = None
@@ -97,6 +98,12 @@ class Scenario:
     api: str = "chat"
     catches: str = ""
     tags: tuple[str, ...] = field(default_factory=tuple)
+    responses: tuple[Response, ...] = ()
+    retries: int = 0
+
+    def __post_init__(self) -> None:
+        if not self.responses:
+            object.__setattr__(self, "responses", (self.response,))
 
     @property
     def key(self) -> str:

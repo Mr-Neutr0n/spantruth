@@ -7,6 +7,7 @@ truncated body to the client, exactly as on the real network, and not a clean en
 
 from __future__ import annotations
 
+import collections
 import json
 import socket
 import sys
@@ -14,7 +15,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import scenarios
-from .model import Event, Scenario
+from .model import Event, Response, Scenario
 
 
 def _sse(event: Event) -> bytes:
@@ -43,28 +44,37 @@ class _Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": {"message": str(exc)}})
             return
         self.server.record(sc.id, self.path, request)
-        if sc.response.body is not None:
-            self._json(sc.response.status, sc.response.body)
+        retry_header = self.headers.get("x-stainless-retry-count")
+        retry_count = (
+            int(retry_header) if retry_header is not None and retry_header.isdigit() else None
+        )
+        response = self.server.next_response(sc, retry_count)
+        if response.body is not None:
+            self._json(response.status, response.body, response.headers)
         else:
-            self._stream(sc)
+            self._stream(response)
 
-    def _json(self, status: int, body: dict) -> None:
+    def _json(self, status: int, body: dict, headers: dict[str, str] | None = None) -> None:
         payload = json.dumps(body).encode()
         self.send_response(status)
         self.send_header("content-type", "application/json")
         self.send_header("content-length", str(len(payload)))
         self.send_header("x-request-id", "req_spantruth")
+        for k, v in (headers or {}).items():
+            self.send_header(k, v)
         self.end_headers()
         self.wfile.write(payload)
 
-    def _stream(self, sc: Scenario) -> None:
-        self.send_response(sc.response.status)
+    def _stream(self, response: Response) -> None:
+        self.send_response(response.status)
         self.send_header("content-type", "text/event-stream")
         self.send_header("transfer-encoding", "chunked")
         self.send_header("x-request-id", "req_spantruth")
+        for k, v in response.headers.items():
+            self.send_header(k, v)
         self.end_headers()
-        events = sc.response.events or ()
-        drop = sc.response.drop_after
+        events = response.events or ()
+        drop = response.drop_after
         for event in events[:drop]:
             chunk = _sse(event)
             self.wfile.write(f"{len(chunk):x}\r\n".encode() + chunk + b"\r\n")
@@ -86,8 +96,27 @@ class MockServer(ThreadingHTTPServer):
     def __init__(self, port: int = 0) -> None:
         super().__init__(("127.0.0.1", port), _Handler)
         self.requests: list[tuple[str, str, bytes]] = []
+        self._counts: dict[str, int] = collections.defaultdict(int)
         self._lock = threading.Lock()
         self._thread = threading.Thread(target=self.serve_forever, daemon=True)
+
+    def next_response(self, sc: Scenario, retry_count: int | None = None) -> Response:
+        with self._lock:
+            responses = sc.responses
+            if len(responses) <= 1:
+                return sc.response
+            if retry_count is not None:
+                idx = min(retry_count, len(responses) - 1)
+                self._counts[sc.id] = (idx + 1) % len(responses)
+                return responses[idx]
+            idx = self._counts[sc.id]
+            self._counts[sc.id] = (idx + 1) % len(responses)
+            return responses[idx]
+
+    def reset(self) -> None:
+        with self._lock:
+            self._counts.clear()
+            self.requests.clear()
 
     def handle_error(self, request, client_address) -> None:
         # A client that closes its connection early is a scenario, not a server fault.

@@ -120,13 +120,15 @@ def run(sc: Scenario, base_url: str, seen: Seen) -> None:
     if sc.provider == "openai":
         import openai
 
-        client = openai.OpenAI(base_url=base_url, api_key="wt-test", max_retries=0, timeout=10)
+        client = openai.OpenAI(
+            base_url=base_url, api_key="wt-test", max_retries=sc.retries, timeout=10
+        )
         result, on_result, on_event = _openai_create(client, sc)
     else:
         import anthropic
 
         client = anthropic.Anthropic(
-            base_url=base_url, api_key="wt-test", max_retries=0, timeout=10
+            base_url=base_url, api_key="wt-test", max_retries=sc.retries, timeout=10
         )
         result = client.messages.create(**_anthropic_kwargs(sc))
         on_result, on_event = _anthropic_result, _anthropic_event
@@ -152,14 +154,16 @@ async def _run_async(sc: Scenario, base_url: str, seen: Seen) -> None:
     if sc.provider == "openai":
         import openai
 
-        client = openai.AsyncOpenAI(base_url=base_url, api_key="wt-test", max_retries=0, timeout=10)
+        client = openai.AsyncOpenAI(
+            base_url=base_url, api_key="wt-test", max_retries=sc.retries, timeout=10
+        )
         pending, on_result, on_event = _openai_create(client, sc)
         result = await pending
     else:
         import anthropic
 
         client = anthropic.AsyncAnthropic(
-            base_url=base_url, api_key="wt-test", max_retries=0, timeout=10
+            base_url=base_url, api_key="wt-test", max_retries=sc.retries, timeout=10
         )
         result = await client.messages.create(**_anthropic_kwargs(sc))
         on_result, on_event = _anthropic_result, _anthropic_event

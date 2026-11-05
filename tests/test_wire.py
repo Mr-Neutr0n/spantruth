@@ -18,31 +18,31 @@ RESPONSES_EVENT = pydantic.TypeAdapter(openai.types.responses.ResponseStreamEven
 
 @pytest.mark.parametrize("sc", ALL, ids=lambda s: s.id)
 def test_fixtures_parse_with_sdk_types(sc):
-    r = sc.response
-    if r.status >= 400:
-        assert r.body is not None and "error" in r.body
-        return
-    if sc.api == "responses":
-        for e in r.events or ():
-            assert RESPONSES_EVENT.validate_python(json.loads(e.data)).type == e.event
-    elif sc.provider == "openai":
-        if r.body is not None:
-            openai.types.chat.ChatCompletion.model_validate(r.body, strict=False)
-        for e in r.events or ():
-            if isinstance(e.data, dict):
-                openai.types.chat.ChatCompletionChunk.model_validate(e.data)
-            else:
-                assert e.data == "[DONE]"
-    else:
-        if r.body is not None:
-            anthropic.types.Message.model_validate(r.body)
-        for e in r.events or ():
-            if e.event == "error":
-                # Not a RawMessageStreamEvent: the SDK raises on it before parsing.
-                assert e.data["error"]["type"] in {"overloaded_error", "api_error"}
-                continue
-            parsed = ANTHROPIC_EVENT.validate_python(e.data)
-            assert parsed.type == e.event
+    for r in sc.responses:
+        if r.status >= 400:
+            assert r.body is not None and "error" in r.body
+            continue
+        if sc.api == "responses":
+            for e in r.events or ():
+                assert RESPONSES_EVENT.validate_python(json.loads(e.data)).type == e.event
+        elif sc.provider == "openai":
+            if r.body is not None:
+                openai.types.chat.ChatCompletion.model_validate(r.body, strict=False)
+            for e in r.events or ():
+                if isinstance(e.data, dict):
+                    openai.types.chat.ChatCompletionChunk.model_validate(e.data)
+                else:
+                    assert e.data == "[DONE]"
+        else:
+            if r.body is not None:
+                anthropic.types.Message.model_validate(r.body)
+            for e in r.events or ():
+                if e.event == "error":
+                    # Not a RawMessageStreamEvent: the SDK raises on it before parsing.
+                    assert e.data["error"]["type"] in {"overloaded_error", "api_error"}
+                    continue
+                parsed = ANTHROPIC_EVENT.validate_python(e.data)
+                assert parsed.type == e.event
 
 
 @pytest.mark.parametrize("sc", ALL, ids=lambda s: s.id)
@@ -141,3 +141,17 @@ def test_response_rejects_body_and_events_together():
 def test_async_variants_exist_for_stream_patterns():
     assert scenarios.get("openai/async-stream-early-exit").asynchronous
     assert scenarios.get("anthropic/async-stream").asynchronous
+
+
+@pytest.mark.parametrize("sid", ["openai/retry-429", "anthropic/retry-429"])
+def test_retry_truth_is_the_successful_call(sid):
+    sc = scenarios.get(sid)
+    assert len(sc.responses) == 2
+    assert sc.responses[0].status == 429
+    assert sc.responses[0].headers.get("retry-after") == "0.1"
+    assert sc.responses[1].status == 200
+    assert sc.retries == 2
+    t = scenarios.truth(sc)
+    assert t.error is None
+    assert (t.input_tokens, t.output_tokens) == (2477, 367)
+    assert t.finish_reasons in (("stop",), ("end_turn",))
